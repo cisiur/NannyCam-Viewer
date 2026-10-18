@@ -8,14 +8,45 @@
         MinHeight="500">
     <Grid Margin="16">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Background="Black"
-                CornerRadius="8">
+        <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="RtspUriTextBox"
+                     VerticalContentAlignment="Center"
+                     MinWidth="360"
+                     Margin="0,0,8,0"
+                     ToolTip="RTSP video URI" />
+            <Button x:Name="ConnectButton"
+                    Grid.Column="1"
+                    Padding="18,6"
+                    Margin="0,0,8,0"
+                    Click="ConnectButton_Click">Connect</Button>
+            <Button x:Name="DisconnectButton"
+                    Grid.Column="2"
+                    Padding="18,6"
+                    Click="DisconnectButton_Click">Disconnect</Button>
+        </Grid>
+
+        <Border Grid.Row="1"
+                Background="Black"
+                CornerRadius="8"
+                ClipToBounds="True">
             <Grid>
-                <TextBlock Text="Camera preview"
+                <Image x:Name="VideoImage"
+                       Stretch="Uniform"
+                       SnapsToDevicePixels="True"
+                       UseLayoutRounding="True" />
+                <TextBlock x:Name="ViewportMessage"
+                           Text="Camera preview"
                            Foreground="White"
                            FontSize="24"
                            HorizontalAlignment="Center"
@@ -23,10 +54,10 @@
             </Grid>
         </Border>
 
-        <StatusBar Grid.Row="1"
+        <StatusBar Grid.Row="2"
                    Margin="0,12,0,0">
             <StatusBarItem>
-                <TextBlock Text="Disconnected" />
+                <TextBlock x:Name="ConnectionStatusText" Text="Disconnected" />
             </StatusBarItem>
         </StatusBar>
     </Grid>

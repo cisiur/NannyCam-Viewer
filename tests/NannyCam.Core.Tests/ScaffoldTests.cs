@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace NannyCam.Core.Tests;
 
 public sealed class ScaffoldTests
