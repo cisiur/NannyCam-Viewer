@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NannyCam.Viewer/NannyCam.Viewer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NannyCam.Viewer.Tests/NannyCam.Viewer.Tests.csproj" />
+  </Folder>
+</Solution>
