@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>NannyCam.Viewer</AssemblyName>
+    <RootNamespace>NannyCam.Viewer</RootNamespace>
+  </PropertyGroup>
+
+</Project>
