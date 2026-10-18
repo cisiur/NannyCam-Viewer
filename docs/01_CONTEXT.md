@@ -2,9 +2,9 @@
 
 ## Purpose
 
-NannyCam Viewer is a small personal-use Windows desktop application for direct local access to a TrueLife NannyCam R3 Smart camera.
+NannyCam Viewer is a small personal-use viewer/controller for direct local access to a TrueLife NannyCam R3 Smart camera.
 
-The application exists because the camera exposes useful local RTSP and ONVIF interfaces, while generic players have shown poor handling of this device's audio timing/noise characteristics.
+The first frontend is Windows/WPF. Shared camera/media/control logic must remain UI-platform independent so a later Android TV / Fire OS frontend can reuse the core without duplicating the camera logic.
 
 ## Core goals
 
@@ -14,20 +14,46 @@ The application exists because the camera exposes useful local RTSP and ONVIF in
 4. Provide basic ONVIF PTZ control.
 5. Keep installation and configuration simple.
 6. Keep the codebase small and understandable.
+7. Preserve a clean path to a later Android TV / Fire OS frontend.
 
 ## Non-goals
 
 - cloud backend,
 - accounts or multi-user support,
-- mobile application,
-- large plugin ecosystem,
+- implementing Android/Fire OS now,
 - generic support for every ONVIF camera,
 - complex recording/NVR platform,
-- multi-epic product process.
+- large multi-epic product process.
+
+## Architecture rule
+
+The repository is split into:
+
+```text
+NannyCam.Core
+    shared contracts and platform-independent camera/media/control logic
+
+NannyCam.Viewer.Windows
+    Windows/WPF UI and Windows-specific presentation/runtime integration
+
+future:
+NannyCam.Viewer.Android
+    Android TV / Fire OS UI and platform-specific media presentation where required
+```
+
+Shared code must not reference WPF, Windows UI types, Android types, or a concrete platform renderer.
+
+Do not introduce abstractions only for theoretical portability. Add seams where the concern is actually platform-specific, especially:
+
+- decoded video frame presentation,
+- audio device output,
+- native FFmpeg/runtime loading,
+- application lifecycle/UI,
+- hardware/platform decoder integration if later required.
+
+RTSP/ONVIF configuration, connection state, bounded/latest-frame policies, media timing policies, and similar reusable behavior belong in core when they do not require platform APIs.
 
 ## Key technical observation
-
-The camera's video path behaves well when isolated.
 
 Known-good video-only ffplay test:
 
@@ -35,32 +61,31 @@ Known-good video-only ffplay test:
 ffplay -rtsp_transport tcp -an -fflags nobuffer -flags low_delay -framedrop -sync ext "rtsp://192.168.50.207:554/streamtype=0"
 ```
 
-Combined A/V is stable with:
+Known-good combined A/V baseline:
 
 ```powershell
 ffplay -rtsp_transport tcp -fflags nobuffer -flags low_delay -framedrop -sync video -af "aresample=async=1000:first_pts=0" "rtsp://192.168.50.207:554/streamtype=0"
 ```
 
-This provides near-live video and a small, stable audio delay.
+Audio noise-reduction filters tested directly in ffplay reduced noise but tended to add noticeable latency.
 
-Audio noise reduction filters tested directly in ffplay reduced noise but tended to add noticeable latency.
-
-Therefore the app architecture should keep audio and video independent and prioritize bounded latency over perfect synchronization.
-
-## Design rule
+## Media design rules
 
 Video is authoritative for perceived live state.
 
-Audio processing must use bounded buffers. If processing falls behind, old audio is discarded.
+Video and audio use independent pipelines.
 
-No audio operation is allowed to block video decode/render.
+No audio operation may block video decode/render.
 
-## Current platform choice
+Buffers must be bounded. For a live nanny viewer, newer media is more valuable than faithfully replaying stale media. When a pipeline falls behind, stale data should be discarded rather than accumulating seconds of latency.
+
+## Current platform direction
 
 - .NET 10
-- WPF
-- Windows desktop
+- Windows/WPF first frontend
 - FFmpeg-based media handling
 - ONVIF PTZ
 
-The exact FFmpeg integration library is intentionally deferred until Task 01.
+For NC-01, FFmpeg.AutoGen is the preferred native FFmpeg binding unless implementation research finds a concrete compatibility blocker.
+
+Android TV / Fire OS remains a future frontend. Its rendering/native media backend may differ from Windows while reusing core contracts and camera/control logic.
