@@ -1,8 +1,8 @@
 # NannyCam Viewer
 
-Small Windows desktop viewer for a TrueLife NannyCam R3 Smart camera.
+Small local viewer/controller for a TrueLife NannyCam R3 Smart camera.
 
-The goal is a local, low-latency alternative to the vendor app for personal use.
+The first frontend is Windows/WPF, but camera/media logic is deliberately kept UI-platform independent so a later Android TV / Fire OS frontend can reuse the core.
 
 ## Scope
 
@@ -22,32 +22,42 @@ This is intentionally a small personal-use project, not a large multi-service pr
 - Audio: G.711 A-law / PCMA, 8000 Hz, mono, 64 kb/s
 - ONVIF device service: `http://192.168.50.207:8899/onvif/device_service`
 
-## Architecture direction
-
-Video and audio are separate pipelines:
+## Architecture
 
 ```text
-RTSP
-├── Video pipeline -> decode/render -> UI
-└── Audio pipeline -> decode/filter/output
+                         NannyCam.Core
+Camera -> RTSP/ONVIF -> media/control contracts + shared logic
+                              |
+                              +-> NannyCam.Viewer.Windows (WPF)
+                              |
+                              +-> future Android TV / Fire OS frontend
 ```
 
-Audio processing must never stall video. If the audio pipeline falls behind, stale audio should be dropped instead of accumulating latency.
+Video and audio remain independent pipelines.
+
+Platform-specific rendering, audio output, native library loading, and similar concerns stay outside shared core contracts when they are genuinely platform-specific.
 
 ## Repository layout
 
 ```text
-src/NannyCam.Viewer/
-tests/NannyCam.Viewer.Tests/
+src/
+  NannyCam.Core/
+  NannyCam.Viewer.Windows/
+
+tests/
+  NannyCam.Core.Tests/
+  NannyCam.Viewer.Windows.Tests/
+
 docs/
 ```
 
-## Stack
+## Current stack
 
-- Windows
 - .NET 10
-- WPF
+- Windows/WPF first frontend
 - FFmpeg-based media pipeline
 - ONVIF for PTZ
+
+Android TV / Fire OS is a future option, not part of the current delivery scope.
 
 Work is tracked in `docs/02_ROADMAP.md`.
