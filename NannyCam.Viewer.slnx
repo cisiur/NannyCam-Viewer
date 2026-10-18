@@ -1,8 +1,10 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/NannyCam.Viewer/NannyCam.Viewer.csproj" />
+    <Project Path="src/NannyCam.Core/NannyCam.Core.csproj" />
+    <Project Path="src/NannyCam.Viewer.Windows/NannyCam.Viewer.Windows.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/NannyCam.Viewer.Tests/NannyCam.Viewer.Tests.csproj" />
+    <Project Path="tests/NannyCam.Core.Tests/NannyCam.Core.Tests.csproj" />
+    <Project Path="tests/NannyCam.Viewer.Windows.Tests/NannyCam.Viewer.Windows.Tests.csproj" />
   </Folder>
 </Solution>
