@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NannyCam.Core</AssemblyName>
+    <RootNamespace>NannyCam.Core</RootNamespace>
+  </PropertyGroup>
+</Project>
