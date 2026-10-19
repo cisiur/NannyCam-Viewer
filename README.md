@@ -1,6 +1,6 @@
 # NannyCam Viewer
 
-Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video, and NC-02 provides physically validated independent low-latency audio through Windows WASAPI. The viewer does not record, capture snapshots, or provide ONVIF/PTZ.
+Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video; NC-02 provides physically validated independent low-latency audio through Windows WASAPI; and NC-03 provides physically validated low-latency audio cleanup. The viewer does not record, capture snapshots, or provide ONVIF/PTZ.
 
 ## Run the Windows viewer
 
@@ -46,7 +46,7 @@ Audio has no synchronization path to video and cannot delay video decoding or pr
 
 ## NC-03 audio cleanup
 
-The live PCM16 path applies a fixed first-order 120 Hz high-pass filter followed by +10 dB amplitude gain, selected after offline audition of a representative corrected PCM16 camera capture. Every processed sample saturates to the PCM16 range instead of wrapping. There is no noise gate, spectral/large-window denoising, AGC, or added buffering: quiet sounds are preserved and the existing live-buffer policy remains unchanged. Final physical-camera validation of this updated live cleanup path is still pending.
+The live PCM16 path applies a fixed first-order 120 Hz high-pass filter followed by +10 dB amplitude gain, selected after offline audition of a representative corrected PCM16 camera capture. The naturally quiet camera audio motivated the fixed gain. Every processed sample saturates to the PCM16 range instead of wrapping. There is no noise gate, spectral/large-window denoising, AGC, or added buffering: quiet sounds are preserved and the existing live-buffer policy remains unchanged. This cleanup path was physically validated in the Windows application: speech is more comfortably audible and understandable, quiet sounds remain available, no problematic clipping or new artifacts were observed, and no meaningful additional latency or video impact was observed.
 
 ## Known stream and manual latency check
 
@@ -58,7 +58,7 @@ ffplay -rtsp_transport tcp -an -fflags nobuffer -flags low_delay -framedrop -syn
 
 NC-01 was manually validated with the physical TrueLife NannyCam R3 Smart camera: the configured RTSP stream rendered correctly, remained effectively live during extended playback without progressive latency accumulation, and returned to live video after Disconnect → Connect. Automated tests remain hardware-independent.
 
-NC-02 was validated end-to-end in the Windows application with the physical camera: audio is audible and understandable, the prior A-law crackling is gone, audio and video remain effectively live without progressive audio-delay accumulation, mute and volume work, and Disconnect → Connect restores both audio and video. The independent audio path does not degrade the validated video path. Audible background noise remains a future NC-03 investigation; no cleanup processing is part of NC-02.
+NC-02 was validated end-to-end in the Windows application with the physical camera: audio is audible and understandable, the prior A-law crackling is gone, audio and video remain effectively live without progressive audio-delay accumulation, mute and volume work, and Disconnect → Connect restores both audio and video. The independent audio path does not degrade the validated video path. The naturally quiet audio later motivated NC-03; no cleanup processing is part of NC-02.
 
 ## Repository layout
 

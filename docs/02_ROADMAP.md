@@ -54,11 +54,11 @@ Goal: improve speech audibility while preserving quiet sounds and the validated 
 - [x] preserve packet/chunk continuity, sample count, and the existing 200 ms / 100 ms live-buffer policy
 - [x] no noise gate, spectral/large-window denoising, AGC, sample-rate conversion, or added buffering
 - [x] deterministic unit coverage for filtering, gain, saturation, continuity, and Core architecture boundaries
-- [~] physical-camera validation of the updated live cleanup path
+- [x] physical-camera validation of the updated live cleanup path
 
 ## NC-04 — ONVIF PTZ
 
-Planned. Not part of NC-01.
+Planned as the next milestone after completed NC-03.
 
 ## NC-05 — Personal-use polish
 

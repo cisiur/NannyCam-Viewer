@@ -89,9 +89,9 @@ ffplay -rtsp_transport tcp -vn -fflags nobuffer -flags low_delay -af "aresample=
 The corrected PCM16 LE path was validated end-to-end in the Windows application:
 audio is understandable, the prior A-law crackling is gone, audio and video
 remain effectively live without progressive audio-delay accumulation, mute and
-volume work, and Disconnect → Connect restores both pipelines. Audible
-background noise remains a future NC-03 investigation. Earlier filtering
-experiments predated the corrected payload-format finding and are not
+volume work, and Disconnect → Connect restores both pipelines. The camera
+audio remains naturally quiet, motivating the fixed gain used by NC-03. Earlier
+filtering experiments predated the corrected payload-format finding and are not
 authoritative for the current PCM16 signal.
 
 After capturing representative corrected PCM16 audio with room/background
@@ -99,8 +99,11 @@ silence and normal speech, offline audition selected a 120 Hz high-pass filter
 followed by +10 dB gain as the preferred balance of speech audibility and
 background noise. A noise gate was intentionally excluded to preserve quiet
 sounds. The application implementation uses this fixed low-latency baseline
-with PCM16 saturation and no large-window/spectral denoising; final live
-physical-camera validation remains pending.
+with PCM16 saturation and no large-window/spectral denoising. It was then
+validated live in the Windows application: speech is more comfortably audible
+and understandable, quiet sounds remain available, no problematic clipping or
+new artifacts were observed, audio remains effectively live, video is
+unaffected, and normal application operation is stable.
 
 ## Security
 
