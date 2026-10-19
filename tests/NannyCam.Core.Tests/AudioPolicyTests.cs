@@ -5,26 +5,40 @@ namespace NannyCam.Core.Tests;
 
 public sealed class AudioPolicyTests
 {
-    [Theory]
-    [InlineData(0xD5, 8)]
-    [InlineData(0x55, -8)]
-    [InlineData(0x80, 5504)]
-    [InlineData(0x00, -5504)]
-    [InlineData(0xFF, 848)]
-    [InlineData(0x7F, -848)]
-    public void PcmaDecoder_DecodesKnownAlawVectors(byte encoded, short expected)
+    [Fact]
+    public void Pcm16LePacketAligner_PreservesCompleteSamplesByteForByte()
     {
-        Assert.Equal(expected, PcmaAlawDecoder.DecodeSample(encoded));
+        Pcm16LePacketAligner aligner = new();
+        byte[] destination = new byte[5];
+
+        int written = aligner.CopyCompleteSamples([0x34, 0x12, 0xCD, 0xAB], destination);
+
+        Assert.Equal(4, written);
+        Assert.Equal([0x34, 0x12, 0xCD, 0xAB], destination[..written]);
+        Assert.False(aligner.HasTrailingByte);
     }
 
     [Fact]
-    public void PcmaDecoder_WritesLittleEndianPcm16()
+    public void Pcm16LePacketAligner_CarriesOnlyTheTrailingByteAcrossOddPackets()
     {
-        byte[] destination = new byte[4];
+        Pcm16LePacketAligner aligner = new();
+        byte[] firstDestination = new byte[4];
+        byte[] secondDestination = new byte[4];
 
-        PcmaAlawDecoder.DecodeToPcm16([0xD5, 0x55], destination);
+        int firstWritten = aligner.CopyCompleteSamples([0x34, 0x12, 0xCD], firstDestination);
 
-        Assert.Equal([0x08, 0x00, 0xF8, 0xFF], destination);
+        Assert.Equal(2, firstWritten);
+        Assert.Equal([0x34, 0x12], firstDestination[..firstWritten]);
+        Assert.True(aligner.HasTrailingByte);
+
+        int secondWritten = aligner.CopyCompleteSamples([0xAB, 0x78, 0x56], secondDestination);
+
+        Assert.Equal(4, secondWritten);
+        Assert.Equal([0xCD, 0xAB, 0x78, 0x56], secondDestination[..secondWritten]);
+        Assert.False(aligner.HasTrailingByte);
+        Assert.Equal(
+            [0x34, 0x12, 0xCD, 0xAB, 0x78, 0x56],
+            firstDestination[..firstWritten].Concat(secondDestination[..secondWritten]));
     }
 
     [Fact]

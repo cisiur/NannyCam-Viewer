@@ -14,11 +14,11 @@ This is deliberately not a generic media framework. There are no audio, ONVIF/PT
 
 ## NC-02 implementation
 
-NC-02 adds an audio path without changing the NC-01 video pipeline. A second FFmpeg RTSP-over-TCP worker requests audio-only media and only demuxes the PCMA packets. `NannyCam.Core` decodes G.711 A-law to signed 16-bit PCM and owns the bounded live PCM ring-buffer policy. `NannyCam.Viewer.Windows` owns NAudio 3.2.0 and its shared-mode WASAPI output, plus mute and volume controls.
+NC-02 adds an audio path without changing the NC-01 video pipeline. A second FFmpeg RTSP-over-TCP worker requests audio-only media and only demuxes the camera payload. `NannyCam.Core` owns a minimal PCM16 packet-boundary aligner and the bounded live PCM ring-buffer policy. `NannyCam.Viewer.Windows` owns NAudio 3.2.0 and its shared-mode WASAPI output, plus mute and volume controls.
 
-The camera format is PCMA / G.711 A-law, 8 kHz, mono. The buffer allows a maximum 200 ms of PCM (3,200 bytes). When an incoming packet would exceed that maximum, the policy retains/recover toward the newest 100 ms of audio, rather than replaying stale audio. Ordinary jitter below the threshold is not flushed. This policy is independent of and cannot alter the video latest-frame slot or video timing.
+The camera metadata advertises PCMA / G.711 A-law, 8 kHz, mono, but physical packet-copy investigation found a device firmware/RTSP quirk: ten seconds of payload contained 160,000 bytes, matching signed PCM16 little-endian at 8 kHz mono. Direct PCM16 LE playback was clear and understandable; A-law interpretation produced severe crackling. The worker keeps the advertised PCMA metadata check to identify this known stream but passes its actual PCM16 LE payload to the buffer unchanged, retaining at most one byte only if a packet splits a 16-bit sample. The buffer allows a maximum 200 ms of PCM (3,200 bytes). When an incoming packet would exceed that maximum, the policy retains/recover toward the newest 100 ms of audio, rather than replaying stale audio. Ordinary jitter below the threshold is not flushed. This policy is independent of and cannot alter the video latest-frame slot or video timing.
 
-Audio errors have their own state/status and leave a healthy video connection running. Connect creates new video and audio pipelines; disconnect and window close cancel both independently with bounded teardown. Audio playback remains pending physical-camera/device validation.
+Audio errors have their own state/status and leave a healthy video connection running. Connect creates new video and audio pipelines; disconnect and window close cancel both independently with bounded teardown. Final in-app physical-camera/device validation of the corrected PCM16 path remains pending.
 
 ## Low-latency policy
 

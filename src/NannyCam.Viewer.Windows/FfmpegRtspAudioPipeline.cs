@@ -6,14 +6,15 @@ using NannyCam.Core;
 namespace NannyCam.Viewer.Windows;
 
 /// <summary>
-/// Independent RTSP/TCP PCMA ingest worker. FFmpeg is used only for RTSP
-/// demuxing; G.711 A-law decoding remains deterministic managed Core code.
+/// Independent RTSP/TCP audio ingest worker. This camera advertises PCMA, but
+/// its verified demuxed payload is PCM16 little-endian.
 /// </summary>
 internal sealed class FfmpegRtspAudioPipeline : IAsyncDisposable
 {
     private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(3);
     private readonly AudioStateMachine _states = new();
     private readonly BoundedPcmBuffer _buffer;
+    private readonly Pcm16LePacketAligner _pcm16Aligner = new();
     private readonly Uri _uri;
     private readonly CancellationTokenSource _cancellation = new();
     private readonly GCHandle _selfHandle;
@@ -128,6 +129,10 @@ internal sealed class FfmpegRtspAudioPipeline : IAsyncDisposable
             int streamIndex = ffmpeg.av_find_best_stream(format, AVMediaType.AVMEDIA_TYPE_AUDIO, -1, -1, null, 0);
             ThrowIfError(streamIndex, "find the audio stream");
             AVStream* stream = format->streams[streamIndex];
+            // Firmware/RTSP quirk: this camera advertises PCMA 8 kHz mono,
+            // but its packet payload has been physically verified as PCM16 LE
+            // 8 kHz mono. Keep this metadata check to identify the known
+            // stream, but do not invoke an A-law decoder for its payload.
             if (stream->codecpar->codec_id != AVCodecID.AV_CODEC_ID_PCM_ALAW ||
                 stream->codecpar->sample_rate != 8000 ||
                 stream->codecpar->ch_layout.nb_channels != 1)
@@ -152,7 +157,7 @@ internal sealed class FfmpegRtspAudioPipeline : IAsyncDisposable
 
                 if (packet->stream_index == streamIndex && packet->size > 0)
                 {
-                    DecodeAndBuffer(packet->data, packet->size);
+                    BufferPcm16Payload(packet->data, packet->size);
                 }
 
                 ffmpeg.av_packet_unref(packet);
@@ -178,6 +183,8 @@ internal sealed class FfmpegRtspAudioPipeline : IAsyncDisposable
         }
         finally
         {
+            _pcm16Aligner.Clear();
+
             if (options is not null)
             {
                 ffmpeg.av_dict_free(&options);
@@ -202,17 +209,24 @@ internal sealed class FfmpegRtspAudioPipeline : IAsyncDisposable
         }
     }
 
-    private unsafe void DecodeAndBuffer(byte* data, int length)
+    private unsafe void BufferPcm16Payload(byte* data, int length)
     {
-        byte[] pcm = ArrayPool<byte>.Shared.Rent(checked(length * sizeof(short)));
+        byte[] alignedPayload = ArrayPool<byte>.Shared.Rent(checked(length + 1));
         try
         {
-            PcmaAlawDecoder.DecodeToPcm16(new ReadOnlySpan<byte>(data, length), pcm);
-            _buffer.Write(pcm.AsSpan(0, length * sizeof(short)));
+            int completeLength = _pcm16Aligner.CopyCompleteSamples(
+                new ReadOnlySpan<byte>(data, length),
+                alignedPayload);
+            if (completeLength == 0)
+            {
+                return;
+            }
+
+            _buffer.Write(alignedPayload.AsSpan(0, completeLength));
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(pcm);
+            ArrayPool<byte>.Shared.Return(alignedPayload);
         }
 
         if (!_receivedAudio)

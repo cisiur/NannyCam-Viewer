@@ -6,7 +6,7 @@ namespace NannyCam.Core.Tests;
 public sealed class ArchitectureTests
 {
     [Fact]
-    public void CoreDoesNotReferenceTheWindowsFrontendOrWpfAssemblies()
+    public void CoreDoesNotReferenceTheWindowsFrontendOrPlatformSpecificMediaAssemblies()
     {
         Assembly coreAssembly = typeof(NannyCam.Core.ArchitectureMarker).Assembly;
         string[] forbidden = [
@@ -14,6 +14,7 @@ public sealed class ArchitectureTests
             "PresentationCore",
             "PresentationFramework",
             "WindowsBase",
+            "FFmpeg.AutoGen",
             "NAudio",
             "NAudio.Core",
             "NAudio.Wasapi",

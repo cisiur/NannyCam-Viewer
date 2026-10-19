@@ -1,6 +1,6 @@
 # NannyCam Viewer
 
-Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video. NC-02 adds independent PCMA audio and Windows WASAPI playback, pending physical-camera audio validation. The viewer does not record, capture snapshots, or provide ONVIF/PTZ.
+Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video. NC-02 adds independent low-latency audio and Windows WASAPI playback, pending final in-app physical-camera validation. The viewer does not record, capture snapshots, or provide ONVIF/PTZ.
 
 ## Run the Windows viewer
 
@@ -18,7 +18,7 @@ The URI field defaults to:
 rtsp://192.168.50.207:554/streamtype=0
 ```
 
-Click **Connect**. The video status moves from Connecting to Connected only after a usable decoded video frame is available. The independent audio worker then demuxes PCMA from a second RTSP/TCP connection and plays it through the default Windows audio device. Use **Mute** and the volume slider for application audio. Click **Disconnect** before changing the URI or closing the window.
+Click **Connect**. The video status moves from Connecting to Connected only after a usable decoded video frame is available. The independent audio worker then demuxes the camera's audio payload from a second RTSP/TCP connection and plays it through the default Windows audio device. Use **Mute** and the volume slider for application audio. Click **Disconnect** before changing the URI or closing the window.
 
 ## NC-01 architecture
 
@@ -28,7 +28,7 @@ Camera RTSP (TCP) -> FFmpeg input + H.264 decoder (worker thread)
                     -> reusable WPF WriteableBitmap (UI thread)
 
 Camera RTSP (TCP) -> FFmpeg audio-only demux (separate worker)
-                    -> Core PCMA A-law to PCM16 + bounded live buffer
+                    -> verified PCM16 LE payload + bounded live buffer
                     -> NAudio 3.2.0 shared-mode WASAPI -> Windows audio device
 ```
 
@@ -40,7 +40,7 @@ Disconnect uses FFmpeg's input interrupt callback, cancels the worker, and frees
 
 ## NC-02 audio policy
 
-The camera audio is G.711 A-law / PCMA, 8 kHz mono. FFmpeg is used only to demux the audio-only RTSP session; Core decodes A-law deterministically to signed 16-bit PCM. The audio buffer is a thread-safe, fixed-size ring: it permits at most **200 ms** (3,200 bytes) of PCM and recovers to at most **100 ms** when an incoming packet would exceed that limit. Normal jitter below the limit is retained. On overflow, the oldest PCM is discarded and the newest audio is retained; a short glitch is preferred over historical playback.
+The camera's RTSP metadata advertises G.711 A-law / PCMA, 8 kHz mono, but physical packet-copy investigation established a firmware/RTSP quirk: ten seconds produced **160,000 bytes**, and the demuxed payload is actually signed PCM16 little-endian, 8 kHz mono. Treating those bytes as A-law caused severe crackling; direct PCM16 LE playback was clear and understandable. FFmpeg is used only to demux the audio-only RTSP session; the payload goes unchanged to Core's PCM buffer, apart from retaining at most one trailing byte when a packet ends mid-sample. The audio buffer is a thread-safe, fixed-size ring: it permits at most **200 ms** (3,200 bytes) of PCM and recovers to at most **100 ms** when an incoming packet would exceed that limit. Normal jitter below the limit is retained. On overflow, the oldest PCM is discarded and the newest audio is retained; a short glitch is preferred over historical playback.
 
 Audio has no synchronization path to video and cannot delay video decoding or presentation. NAudio 3.2.0 uses shared-mode, event-driven WASAPI with a 100 ms requested endpoint latency. Windows may adapt the 8 kHz source format for the selected device. Audio device/pipeline failure is shown separately and does not fail the video connection.
 
@@ -54,7 +54,7 @@ ffplay -rtsp_transport tcp -an -fflags nobuffer -flags low_delay -framedrop -syn
 
 NC-01 was manually validated with the physical TrueLife NannyCam R3 Smart camera: the configured RTSP stream rendered correctly, remained effectively live during extended playback without progressive latency accumulation, and returned to live video after Disconnect → Connect. Automated tests remain hardware-independent.
 
-NC-02 has not yet been validated against the physical camera or a real Windows audio device. Manual validation must confirm audible PCMA playback, bounded live behavior through extended playback, mute/volume, and reconnect without affecting the validated video path.
+Physical packet analysis established the camera payload format, but NC-02 still requires final in-app physical-camera/device validation: confirm clear PCM16 playback, bounded live behavior through extended playback, mute/volume, and reconnect without affecting the validated video path.
 
 ## Repository layout
 

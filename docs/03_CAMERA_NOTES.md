@@ -33,8 +33,13 @@ Observed main stream:
 
 ```text
 Video: H.264 Main, 1920x1080, 12 fps
-Audio: G.711 A-law / PCMA, 8000 Hz, mono, 64 kb/s
+Audio metadata: G.711 A-law / PCMA, 8000 Hz, mono, 64 kb/s
 ```
+
+The TrueLife camera firmware has a verified RTSP metadata quirk. A 10-second
+packet-copy capture reported as PCMA contained 160,000 bytes: the actual audio
+payload is signed PCM16 little-endian, 8000 Hz mono. A-law interpretation
+caused severe crackling; direct PCM16 LE playback was clear and understandable.
 
 ## ONVIF
 
@@ -81,7 +86,9 @@ Stable audio-only:
 ffplay -rtsp_transport tcp -vn -fflags nobuffer -flags low_delay -af "aresample=async=1000:first_pts=0" "rtsp://192.168.50.207:554/streamtype=0"
 ```
 
-Audio noise is real and persistent. Direct `agate` and `afftdn` tests reduced noise but added undesirable latency.
+The verified direct PCM16 LE interpretation produced acceptable audio without
+problematic background noise. Earlier A-law interpretation caused severe
+crackling; low-latency noise processing remains outside the current scope.
 
 ## Security
 

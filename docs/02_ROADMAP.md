@@ -32,18 +32,18 @@ Goal: show `streamtype=0` in the Windows frontend with latency comparable to the
 
 ## NC-02 — Independent low-latency audio
 
-Goal: play the camera's PCMA audio through a bounded, independent live-audio path without affecting video freshness.
+Goal: play the camera's actual PCM16 LE audio payload through a bounded, independent live-audio path without affecting video freshness. The TrueLife NannyCam R3 Smart advertises PCMA 8 kHz mono, but physical packet-copy analysis found its payload is PCM16 LE 8 kHz mono: ten seconds produced 160,000 bytes, direct PCM16 playback was clear, and A-law interpretation caused severe crackling.
 
-- [x] platform-neutral G.711 A-law / PCMA to PCM16 decoder with known-vector tests
+- [x] preserve the verified PCM16 LE payload byte-for-byte, including a bounded one-byte carry for odd packet boundaries
 - [x] independent audio-only RTSP/TCP demux worker; it does not decode or present video
 - [x] bounded 200 ms PCM buffer with 100 ms stale-audio recovery policy
 - [x] stale audio is discarded when the live limit is exceeded; ordinary jitter is retained
 - [x] Core contracts/policy remain free of WPF, NAudio, and Windows audio dependencies
 - [x] separate audio state/error reporting cannot change video connection state
-- [~] play PCMA 8 kHz mono audio through Windows shared-mode WASAPI (implemented; requires physical-camera/device validation)
+- [~] play the verified PCM16 LE 8 kHz mono payload through Windows shared-mode WASAPI (implemented; requires final in-app physical-camera/device validation)
 - [~] mute and volume controls (implemented; requires physical-camera/device validation)
-- [~] no progressive audio delay during extended playback (requires physical-camera validation)
-- [~] Disconnect → Connect recreates audio while preserving the validated video path (requires physical-camera validation)
+- [~] no progressive audio delay during extended playback (requires final in-app physical-camera validation)
+- [~] Disconnect → Connect recreates audio while preserving the validated video path (requires final in-app physical-camera validation)
 
 ## NC-03 — Audio cleanup
 
