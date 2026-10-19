@@ -104,8 +104,9 @@ Goal: provide a small Picture-in-Picture-like personal monitoring workflow witho
 - [x] reproducible `scripts/publish-windows.ps1` stages all Gyan shared-runtime DLLs and private-publish/license information
 - [x] packaged app requires no system FFmpeg, `FFMPEG_ROOT`, or separately installed .NET runtime
 - [x] pinned FFmpeg source/build and private-publish notice are included/documented for the bundled runtime
-- [x] multi-size NannyCam Viewer icon embedded in the Windows EXE and used by the normal WPF window/taskbar surfaces
-- [x] physical validation of the clean Gyan-backed packaged EXE and the complete PiP workflow
+- [x] multi-size NannyCam Viewer icon embedded in the Windows EXE through `ApplicationIcon`
+- [x] physical validation of the clean Gyan-backed packaged EXE and the complete camera/PiP workflow before the icon change
+- [~] final packaged-startup validation after removing the direct WPF ICO resource binding
 
 ## Later / optional
 
