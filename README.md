@@ -42,7 +42,7 @@ The observed main stream is H.264 Main, 1920×1080 at 12 fps. After connecting i
 ffplay -rtsp_transport tcp -an -fflags nobuffer -flags low_delay -framedrop -sync ext "rtsp://192.168.50.207:554/streamtype=0"
 ```
 
-NC-01 was not validated against the physical camera by automated tests. See `docs/02_ROADMAP.md` for the remaining live-camera acceptance checks.
+NC-01 was manually validated with the physical TrueLife NannyCam R3 Smart camera: the configured RTSP stream rendered correctly, remained effectively live during extended playback without progressive latency accumulation, and returned to live video after Disconnect → Connect. Automated tests remain hardware-independent.
 
 ## Repository layout
 

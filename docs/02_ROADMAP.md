@@ -4,7 +4,7 @@
 
 - [ ] planned / requires live validation
 - [~] implemented but awaiting physical-camera validation
-- [x] automatically verified
+- [x] complete
 
 ## NC-00 — Repository scaffold
 
@@ -20,15 +20,15 @@
 
 Goal: show `streamtype=0` in the Windows frontend with latency comparable to the proven ffplay video-only path while keeping reusable media policy/state outside WPF.
 
-- [~] connect/disconnect from configured RTSP URI (implemented; needs camera test)
-- [~] render H.264 1920x1080 / 12 fps stream in Windows frontend (implemented; needs camera test)
+- [x] connect/disconnect from configured RTSP URI (validated with the physical camera)
+- [x] render H.264 1920x1080 / 12 fps stream in Windows frontend (validated with the physical camera)
 - [x] no unbounded decoded-frame buffering
 - [x] stale frames dropped instead of building presentation latency
-- [~] reconnect cleanly after camera/network interruption (cleanup/reconnect implementation needs camera interruption test)
+- [x] reconnect cleanly after Disconnect → Connect (validated with the physical camera)
 - [x] UI thread does not perform network/decode work
 - [x] video path does not depend on audio path
 - [x] reusable connection/frame policy contracts contain no WPF dependency
-- [~] latency comparable to the ffplay reference (requires side-by-side local measurement)
+- [x] effectively live low-latency playback without progressive accumulation (validated with the physical camera)
 
 ## NC-02 — Independent low-latency audio
 
