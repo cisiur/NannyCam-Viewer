@@ -69,6 +69,8 @@ Goal: maintain Connect intent until Disconnect or window close, automatically re
 - [x] liveness expiry is a video failure that is disposed and retried; explicit Disconnect remains distinct cancellable shutdown
 - [x] construct the WPF session before XAML control initialization and clear frozen preview content while reconnecting
 - [x] deterministic Core tests cover initial timeout, progress refresh, indefinite healthy progress, and cancellation precedence
+- [x] native ownership corrective: `avformat_open_input` updates the authoritative context pointer before any error/timeout is thrown, preventing stale-pointer cleanup
+- [x] audit native worker cleanup: the worker owns FFmpeg contexts/dictionaries and releases its callback handle only after the worker has exited
 - [~] physical validation: initially offline camera recovers after one Connect; established connection loss recovers; Disconnect cancels retry with no later attempt; recovered media remains live with one video/audio pipeline
 
 ## NC-04 — ONVIF PTZ

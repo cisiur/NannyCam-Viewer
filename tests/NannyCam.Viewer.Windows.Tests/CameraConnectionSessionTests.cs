@@ -32,6 +32,24 @@ public sealed class CameraConnectionSessionTests
     }
 
     [Fact]
+    public async Task LivenessTimeoutFailure_IsDisposedAndRetried()
+    {
+        FakeAttemptFactory factory = new();
+        FakeReconnectDelay delay = new();
+        await using CameraConnectionSession session = CreateSession(factory, delay);
+
+        await session.ConnectAsync(CreateUri());
+        FakeAttempt first = await factory.WaitForAttemptAsync(1);
+        first.FailVideo("Video connection failed: Camera video stream timed out after 5 seconds without progress.");
+
+        await delay.WaitForRequestAsync(1);
+
+        Assert.True(first.Disposed);
+        Assert.Equal(ConnectionState.Reconnecting, session.Status.State);
+        Assert.Equal(TimeSpan.FromSeconds(1), delay.RequestedDelays[0]);
+    }
+
+    [Fact]
     public async Task EstablishedVideoFailure_StartsReconnectFromTheFirstDelay()
     {
         FakeAttemptFactory factory = new();
@@ -307,7 +325,7 @@ public sealed class CameraConnectionSessionTests
 
         public void SucceedVideo() => VideoStatusChanged?.Invoke(this, new ConnectionStatus(ConnectionState.Connected, "Connected"));
 
-        public void FailVideo() => VideoStatusChanged?.Invoke(this, new ConnectionStatus(ConnectionState.Error, "Video failed"));
+        public void FailVideo(string message = "Video failed") => VideoStatusChanged?.Invoke(this, new ConnectionStatus(ConnectionState.Error, message));
 
         public void FailAudio() => AudioStatusChanged?.Invoke(this, new AudioStatus(AudioPlaybackState.Error, "Audio failed"));
 

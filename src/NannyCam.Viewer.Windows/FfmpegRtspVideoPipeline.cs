@@ -138,9 +138,11 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
             SetOption(&options, "probesize", "32768");
             SetOption(&options, "allowed_media_types", "video");
 
-            AVFormatContext* openedFormat = format;
-            ThrowIfErrorOrInterrupted(ffmpeg.avformat_open_input(&openedFormat, _uri.AbsoluteUri, null, &options), "open RTSP input");
-            format = openedFormat;
+            // avformat_open_input owns and may replace or clear this pointer on
+            // failure. Keep the cleanup variable authoritative before checking
+            // the result so finally never closes the pre-call stale context.
+            int openResult = ffmpeg.avformat_open_input(&format, _uri.AbsoluteUri, null, &options);
+            ThrowIfErrorOrInterrupted(openResult, "open RTSP input");
             ThrowIfErrorOrInterrupted(ffmpeg.avformat_find_stream_info(format, null), "read RTSP stream information");
 
             int streamIndex = ffmpeg.av_find_best_stream(format, AVMediaType.AVMEDIA_TYPE_VIDEO, -1, -1, null, 0);
