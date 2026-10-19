@@ -5,7 +5,8 @@
         Width="1100"
         Height="700"
         MinWidth="800"
-        MinHeight="500">
+        MinHeight="500"
+        ResizeMode="CanResize">
     <Grid x:Name="RootGrid" Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -116,7 +117,8 @@
                 Grid.Row="1"
                 Background="Black"
                 CornerRadius="8"
-                ClipToBounds="True">
+                ClipToBounds="True"
+                PreviewMouseLeftButtonDown="VideoViewport_PreviewMouseLeftButtonDown">
             <Grid>
                 <Image x:Name="VideoImage"
                        Stretch="Uniform"

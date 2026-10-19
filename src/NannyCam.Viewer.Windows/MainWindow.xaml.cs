@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Interop;
 using System.Windows.Threading;
 using NannyCam.Core;
 
@@ -14,6 +15,16 @@ namespace NannyCam.Viewer.Windows;
 public partial class MainWindow : Window
 {
     private const string DefaultRtspUri = "rtsp://192.168.50.207:554/streamtype=0";
+    private const int WmNcHitTest = 0x0084;
+    private const int HtLeft = 10;
+    private const int HtRight = 11;
+    private const int HtTop = 12;
+    private const int HtTopLeft = 13;
+    private const int HtTopRight = 14;
+    private const int HtBottom = 15;
+    private const int HtBottomLeft = 16;
+    private const int HtBottomRight = 17;
+    private const double CompactResizeBorderThickness = 8;
     private readonly CameraConnectionSession _session;
     private readonly WindowPresentationController _presentationController;
     private readonly HttpClient _onvifHttpClient = new();
@@ -26,6 +37,9 @@ public partial class MainWindow : Window
     private bool _disconnecting;
     private bool _applyingPresentationState;
     private bool _presentationTransitioning;
+    private WindowStyle _normalWindowStyle;
+    private ResizeMode _normalResizeMode;
+    private HwndSource? _windowSource;
 
     public MainWindow()
     {
@@ -33,6 +47,9 @@ public partial class MainWindow : Window
         _presentationController = new WindowPresentationController(StopPtzMovementAsync);
         InitializeComponent();
 
+        _normalWindowStyle = WindowStyle;
+        _normalResizeMode = ResizeMode;
+        SourceInitialized += MainWindow_SourceInitialized;
         _presentationController.StateChanged += PresentationController_StateChanged;
         _session.StatusChanged += Session_StatusChanged;
         _session.FrameAvailable += Session_FrameAvailable;
@@ -340,6 +357,23 @@ public partial class MainWindow : Window
         ViewportMessage.Visibility = Visibility.Visible;
     }
 
+    private void VideoViewport_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!_presentationController.State.IsCameraOnly || IsInsideButton(e.OriginalSource as DependencyObject))
+        {
+            return;
+        }
+
+        try
+        {
+            DragMove();
+        }
+        catch (InvalidOperationException)
+        {
+            // WPF can reject DragMove while the window is changing state.
+        }
+    }
+
     private void PresentationController_StateChanged(object? sender, EventArgs e)
     {
         ApplyPresentationState();
@@ -351,6 +385,7 @@ public partial class MainWindow : Window
         _applyingPresentationState = true;
         try
         {
+            ApplyWindowChromeAndMinimumSize(state);
             Topmost = state.IsAlwaysOnTop;
             AlwaysOnTopToggleButton.IsChecked = state.IsAlwaysOnTop;
             CameraOnlyToggleButton.IsChecked = state.IsCameraOnly;
@@ -367,6 +402,120 @@ public partial class MainWindow : Window
             _applyingPresentationState = false;
         }
     }
+
+    private void ApplyWindowChromeAndMinimumSize(ViewerPresentationState state)
+    {
+        double currentWidth = Width;
+        double currentHeight = Height;
+        double currentLeft = Left;
+        double currentTop = Top;
+        ViewerWindowSize minimum = ViewerPresentationLayout.GetMinimum(state);
+
+        WindowStyle = state.IsCameraOnly ? WindowStyle.None : _normalWindowStyle;
+        ResizeMode = state.IsCameraOnly ? ResizeMode.CanResize : _normalResizeMode;
+        MinWidth = minimum.Width;
+        MinHeight = minimum.Height;
+
+        if (!state.IsCameraOnly)
+        {
+            ViewerWindowSize restored = ViewerPresentationLayout.RestoreNormalMinimum(currentWidth, currentHeight);
+            currentWidth = restored.Width;
+            currentHeight = restored.Height;
+        }
+
+        Width = currentWidth;
+        Height = currentHeight;
+        Left = currentLeft;
+        Top = currentTop;
+    }
+
+    private void MainWindow_SourceInitialized(object? sender, EventArgs e)
+    {
+        _windowSource = (HwndSource)PresentationSource.FromVisual(this)!;
+        _windowSource.AddHook(WindowMessageHook);
+    }
+
+    private IntPtr WindowMessageHook(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (message != WmNcHitTest || !_presentationController.State.IsCameraOnly || ResizeMode != ResizeMode.CanResize)
+        {
+            return IntPtr.Zero;
+        }
+
+        Point cursor = PointFromScreen(new Point(GetSignedLowWord(lParam), GetSignedHighWord(lParam)));
+        int hitTest = GetCompactResizeHitTest(cursor);
+        if (hitTest == 0)
+        {
+            return IntPtr.Zero;
+        }
+
+        handled = true;
+        return new IntPtr(hitTest);
+    }
+
+    private int GetCompactResizeHitTest(Point cursor)
+    {
+        bool left = cursor.X >= 0 && cursor.X <= CompactResizeBorderThickness;
+        bool right = cursor.X <= ActualWidth && cursor.X >= ActualWidth - CompactResizeBorderThickness;
+        bool top = cursor.Y >= 0 && cursor.Y <= CompactResizeBorderThickness;
+        bool bottom = cursor.Y <= ActualHeight && cursor.Y >= ActualHeight - CompactResizeBorderThickness;
+
+        if (top && left)
+        {
+            return HtTopLeft;
+        }
+
+        if (top && right)
+        {
+            return HtTopRight;
+        }
+
+        if (bottom && left)
+        {
+            return HtBottomLeft;
+        }
+
+        if (bottom && right)
+        {
+            return HtBottomRight;
+        }
+
+        if (left)
+        {
+            return HtLeft;
+        }
+
+        if (right)
+        {
+            return HtRight;
+        }
+
+        if (top)
+        {
+            return HtTop;
+        }
+
+        return bottom ? HtBottom : 0;
+    }
+
+    private static bool IsInsideButton(DependencyObject? element)
+    {
+        while (element is not null)
+        {
+            if (element is Button)
+            {
+                return true;
+            }
+
+            element = VisualTreeHelper.GetParent(element);
+        }
+
+        return false;
+    }
+
+    private static int GetSignedLowWord(IntPtr value) => unchecked((short)(value.ToInt64() & 0xffff));
+
+    private static int GetSignedHighWord(IntPtr value) => unchecked((short)((value.ToInt64() >> 16) & 0xffff));
 
     protected override async void OnClosing(CancelEventArgs e)
     {

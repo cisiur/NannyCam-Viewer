@@ -91,13 +91,14 @@ Goal: provide focused manual press-and-hold pan/tilt in the Windows viewer witho
 Goal: provide a small Picture-in-Picture-like personal monitoring workflow without changing camera/media behavior.
 
 - [x] Always on Top toggle using normal Windows/WPF `Topmost` behavior
-- [x] Camera-only mode hides application controls/status while preserving the existing preview
+- [x] Camera-only borderless mode hides normal chrome and application controls/status while preserving the existing preview
 - [x] overlay Restore control remains available in Camera-only mode, including while reconnecting or without video
 - [x] Always on Top and Camera-only states remain independent
 - [x] toggling presentation modes does not recreate or disturb the media session
 - [x] Camera-only transition safely requests PTZ Stop before hiding movement controls
-- [x] deterministic hardware-free tests for presentation state and compact-mode PTZ safety
-- [~] manual validation of Always on Top, Camera-only, combined PiP workflow, media continuity, window geometry, and PTZ safety
+- [x] Camera-only preview-background drag, native edge/corner resize behavior, 320×180 compact minimum, and 800×500 normal minimum restoration without a forced outer aspect ratio
+- [x] deterministic hardware-free tests for presentation state, compact/normal size policy, Always on Top preservation, media isolation, and compact-mode PTZ safety
+- [~] manual validation of borderless Camera-only presentation, drag/resize, compact-to-normal restoration, Always on Top, combined PiP workflow, media continuity, window geometry, and PTZ safety
 
 ## Later / optional
 

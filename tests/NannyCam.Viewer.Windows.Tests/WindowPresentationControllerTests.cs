@@ -49,6 +49,19 @@ public sealed class WindowPresentationControllerTests
     }
 
     [Fact]
+    public async Task AlwaysOnTop_PersistsThroughCameraOnlyTransitions()
+    {
+        WindowPresentationController controller = new(static () => Task.CompletedTask);
+
+        controller.SetAlwaysOnTop(true);
+        await controller.SetCameraOnlyAsync(true);
+        await controller.SetCameraOnlyAsync(false);
+
+        Assert.True(controller.State.IsAlwaysOnTop);
+        Assert.False(controller.State.IsCameraOnly);
+    }
+
+    [Fact]
     public async Task PresentationChanges_DoNotMutateAnIndependentConnectionState()
     {
         NonCompletingAttemptFactory factory = new();
