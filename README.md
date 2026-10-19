@@ -62,6 +62,12 @@ The compact ▲ ◀ ▶ ▼ pad is enabled after video reaches Connected. Hold o
 
 For the current camera, the PTZ endpoint is derived from the RTSP host as `http://<camera-host>:8899/onvif/PTZ`, with profile/node token `000` and the local `admin`/empty-password defaults. Each request uses a new WS-Security UsernameToken nonce and PasswordDigest. The camera requires `Created` to follow its own incorrect clock, so the client derives a short-lived offset from ONVIF Device `GetSystemDateAndTime`; no fixed UTC offset is embedded in movement code. The completed Windows viewer integration was physically validated against the camera: all four directions move correctly while held and stop correctly on release. This validation does not cover presets, Home UI, zoom, absolute/relative moves, or position tracking.
 
+## NC-05 personal-use window polish
+
+The normal viewer has independent **Pin** (Always on Top) and **Camera-only** controls. Pin maps directly to normal WPF `Topmost` behavior without reconnecting or recreating the camera session. Camera-only hides the URI, connection, audio, PTZ, and status controls while leaving the same preview in place, with an overlaid **Restore** button that is available even while disconnected or reconnecting. It preserves the user's existing window size and position and retains normal Windows title-bar move, resize, minimize, and close behavior. Entering Camera-only first performs the existing best-effort PTZ Stop so hiding a held direction cannot leave the camera moving.
+
+These are presentation-only states: they do not alter the RTSP URI, connection intent, FFmpeg workers, audio buffering/cleanup, reconnect policy, or ONVIF transport. Normal WPF Topmost works with ordinary windows and commonly with borderless/windowed-fullscreen applications; a true exclusive-fullscreen application can still appear above the viewer depending on Windows and the application. NC-05 awaits manual validation of the combined Picture-in-Picture workflow.
+
 ## Known stream and manual latency check
 
 The observed main stream is H.264 Main, 1920×1080 at 12 fps. After connecting in the viewer, compare the visible camera action with the known-good reference on the same machine/network:

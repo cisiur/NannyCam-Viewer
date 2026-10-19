@@ -88,7 +88,16 @@ Goal: provide focused manual press-and-hold pan/tilt in the Windows viewer witho
 
 ## NC-05 — Personal-use polish
 
-Planned next. Requirements are not defined yet.
+Goal: provide a small Picture-in-Picture-like personal monitoring workflow without changing camera/media behavior.
+
+- [x] Always on Top toggle using normal Windows/WPF `Topmost` behavior
+- [x] Camera-only mode hides application controls/status while preserving the existing preview
+- [x] overlay Restore control remains available in Camera-only mode, including while reconnecting or without video
+- [x] Always on Top and Camera-only states remain independent
+- [x] toggling presentation modes does not recreate or disturb the media session
+- [x] Camera-only transition safely requests PTZ Stop before hiding movement controls
+- [x] deterministic hardware-free tests for presentation state and compact-mode PTZ safety
+- [~] manual validation of Always on Top, Camera-only, combined PiP workflow, media continuity, window geometry, and PTZ safety
 
 ## Later / optional
 

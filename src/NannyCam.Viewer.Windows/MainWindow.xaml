@@ -6,20 +6,22 @@
         Height="700"
         MinWidth="800"
         MinHeight="500">
-    <Grid Margin="16">
+    <Grid x:Name="RootGrid" Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Margin="0,0,0,12">
+        <Grid x:Name="TopControls" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="140" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
@@ -95,9 +97,23 @@
                         PreviewMouseLeftButtonUp="PtzDirection_MouseLeftButtonUp"
                         LostMouseCapture="PtzDirection_LostMouseCapture">▼</Button>
             </Grid>
+            <ToggleButton x:Name="AlwaysOnTopToggleButton"
+                          Grid.Column="6"
+                          Margin="16,0,8,0"
+                          Padding="12,6"
+                          ToolTip="Keep this viewer above ordinary windows"
+                          Checked="AlwaysOnTopToggleButton_Changed"
+                          Unchecked="AlwaysOnTopToggleButton_Changed">Pin</ToggleButton>
+            <ToggleButton x:Name="CameraOnlyToggleButton"
+                          Grid.Column="7"
+                          Padding="12,6"
+                          ToolTip="Show only the camera preview"
+                          Checked="CameraOnlyToggleButton_Changed"
+                          Unchecked="CameraOnlyToggleButton_Changed">Camera-only</ToggleButton>
         </Grid>
 
-        <Border Grid.Row="1"
+        <Border x:Name="VideoViewport"
+                Grid.Row="1"
                 Background="Black"
                 CornerRadius="8"
                 ClipToBounds="True">
@@ -112,10 +128,20 @@
                            FontSize="24"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
+                <Button x:Name="RestoreNormalUiButton"
+                        Visibility="Collapsed"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="12"
+                        Padding="10,5"
+                        Opacity="0.85"
+                        ToolTip="Restore normal viewer controls"
+                        Click="RestoreNormalUiButton_Click">Restore</Button>
             </Grid>
         </Border>
 
-        <StatusBar Grid.Row="2"
+        <StatusBar x:Name="ViewerStatusBar"
+                   Grid.Row="2"
                    Margin="0,12,0,0">
             <StatusBarItem>
                 <TextBlock x:Name="ConnectionStatusText" Text="Disconnected" />

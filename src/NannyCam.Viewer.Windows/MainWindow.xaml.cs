@@ -15,6 +15,7 @@ public partial class MainWindow : Window
 {
     private const string DefaultRtspUri = "rtsp://192.168.50.207:554/streamtype=0";
     private readonly CameraConnectionSession _session;
+    private readonly WindowPresentationController _presentationController;
     private readonly HttpClient _onvifHttpClient = new();
     private WriteableBitmap? _bitmap;
     private PtzMovementController? _ptzController;
@@ -23,12 +24,16 @@ public partial class MainWindow : Window
     private int _presentationScheduled;
     private bool _allowClose;
     private bool _disconnecting;
+    private bool _applyingPresentationState;
+    private bool _presentationTransitioning;
 
     public MainWindow()
     {
         _session = new CameraConnectionSession(new FfmpegCameraConnectionAttemptFactory());
+        _presentationController = new WindowPresentationController(StopPtzMovementAsync);
         InitializeComponent();
 
+        _presentationController.StateChanged += PresentationController_StateChanged;
         _session.StatusChanged += Session_StatusChanged;
         _session.FrameAvailable += Session_FrameAvailable;
         _session.AudioStatusChanged += Session_AudioStatusChanged;
@@ -36,6 +41,7 @@ public partial class MainWindow : Window
         SetButtons(ConnectionState.Disconnected);
         SetAudioControls(false);
         SetPtzControls(false);
+        ApplyPresentationState();
     }
 
     private async void ConnectButton_Click(object sender, RoutedEventArgs e)
@@ -64,6 +70,58 @@ public partial class MainWindow : Window
     private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         _session.SetAudioVolume((float)(e.NewValue / VolumeSlider.Maximum));
+    }
+
+    private void AlwaysOnTopToggleButton_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_applyingPresentationState)
+        {
+            _presentationController.SetAlwaysOnTop(AlwaysOnTopToggleButton.IsChecked == true);
+        }
+    }
+
+    private async void CameraOnlyToggleButton_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_applyingPresentationState || _presentationTransitioning)
+        {
+            return;
+        }
+
+        _presentationTransitioning = true;
+        CameraOnlyToggleButton.IsEnabled = false;
+        try
+        {
+            await _presentationController.SetCameraOnlyAsync(CameraOnlyToggleButton.IsChecked == true);
+        }
+        finally
+        {
+            _presentationTransitioning = false;
+            if (!_presentationController.State.IsCameraOnly)
+            {
+                CameraOnlyToggleButton.IsEnabled = true;
+            }
+        }
+    }
+
+    private async void RestoreNormalUiButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_presentationTransitioning)
+        {
+            return;
+        }
+
+        _presentationTransitioning = true;
+        RestoreNormalUiButton.IsEnabled = false;
+        try
+        {
+            await _presentationController.SetCameraOnlyAsync(false);
+        }
+        finally
+        {
+            _presentationTransitioning = false;
+            RestoreNormalUiButton.IsEnabled = true;
+            CameraOnlyToggleButton.IsEnabled = true;
+        }
     }
 
     private async void PtzDirection_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -280,6 +338,34 @@ public partial class MainWindow : Window
         VideoImage.Source = null;
         ViewportMessage.Text = message;
         ViewportMessage.Visibility = Visibility.Visible;
+    }
+
+    private void PresentationController_StateChanged(object? sender, EventArgs e)
+    {
+        ApplyPresentationState();
+    }
+
+    private void ApplyPresentationState()
+    {
+        ViewerPresentationState state = _presentationController.State;
+        _applyingPresentationState = true;
+        try
+        {
+            Topmost = state.IsAlwaysOnTop;
+            AlwaysOnTopToggleButton.IsChecked = state.IsAlwaysOnTop;
+            CameraOnlyToggleButton.IsChecked = state.IsCameraOnly;
+            TopControls.Visibility = state.IsCameraOnly ? Visibility.Collapsed : Visibility.Visible;
+            ViewerStatusBar.Visibility = state.IsCameraOnly ? Visibility.Collapsed : Visibility.Visible;
+            RootGrid.Margin = state.IsCameraOnly ? new Thickness(0) : new Thickness(16);
+            RootGrid.RowDefinitions[0].Height = state.IsCameraOnly ? new GridLength(0) : GridLength.Auto;
+            RootGrid.RowDefinitions[2].Height = state.IsCameraOnly ? new GridLength(0) : GridLength.Auto;
+            VideoViewport.CornerRadius = state.IsCameraOnly ? new CornerRadius(0) : new CornerRadius(8);
+            RestoreNormalUiButton.Visibility = state.IsCameraOnly ? Visibility.Visible : Visibility.Collapsed;
+        }
+        finally
+        {
+            _applyingPresentationState = false;
+        }
     }
 
     protected override async void OnClosing(CancelEventArgs e)
