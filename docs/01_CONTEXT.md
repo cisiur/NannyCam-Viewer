@@ -20,6 +20,10 @@ The camera metadata advertises PCMA / G.711 A-law, 8 kHz, mono, but physical pac
 
 Audio errors have their own state/status and leave a healthy video connection running. Connect creates new video and audio pipelines; disconnect and window close cancel both independently with bounded teardown. The corrected PCM16 path was validated end-to-end in the Windows application with the physical camera: audio is understandable, the A-law crackling is gone, audio and video remain effectively live without progressive audio-delay accumulation, mute and volume work, and Disconnect → Connect restores both pipelines without degrading the validated video path. Audible background noise remains a planned NC-03 investigation; no cleanup processing is part of NC-02.
 
+## NC-03 implementation
+
+NC-03 adds a small Core-only cleanup stage after PCM16 packet alignment and before the existing bounded buffer. It maintains only the previous input and output needed by a first-order 120 Hz high-pass filter, then applies a fixed +10 dB amplitude gain. Each output sample saturates to PCM16 rather than wrapping. The selection came from offline audition of a representative corrected PCM16 capture. No noise gate, spectral or large-window denoising, AGC, sample-rate conversion, or extra buffering is used, so quiet sounds are preserved and live latency policy is unchanged. Physical-camera validation of the updated live path remains pending.
+
 ## Low-latency policy
 
 The live-view priority is freshness over frame completeness. The FFmpeg input uses RTSP-over-TCP plus `nobuffer`, `low_delay`, zero maximum delay, limited probing, and video-only media. Packet read/H.264 decoding is entirely off the UI thread. There is one decoded-frame position, not a queue: publishing a newer frame disposes the older unpresented frame. WPF schedules no more than one pending render operation, then presents whichever frame is newest when it runs.

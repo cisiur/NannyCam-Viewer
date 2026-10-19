@@ -47,7 +47,14 @@ Goal: play the camera's actual PCM16 LE audio payload through a bounded, indepen
 
 ## NC-03 — Audio cleanup
 
-Planned as the next milestone after NC-02. No audio-cleanup implementation is part of NC-02.
+Goal: improve speech audibility while preserving quiet sounds and the validated low-latency audio/video behavior.
+
+- [x] Core-only incremental cleanup after PCM16 alignment: first-order 120 Hz high-pass filter
+- [x] fixed +10 dB amplitude gain with PCM16 saturation instead of integer wraparound
+- [x] preserve packet/chunk continuity, sample count, and the existing 200 ms / 100 ms live-buffer policy
+- [x] no noise gate, spectral/large-window denoising, AGC, sample-rate conversion, or added buffering
+- [x] deterministic unit coverage for filtering, gain, saturation, continuity, and Core architecture boundaries
+- [~] physical-camera validation of the updated live cleanup path
 
 ## NC-04 — ONVIF PTZ
 

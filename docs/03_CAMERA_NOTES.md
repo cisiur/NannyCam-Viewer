@@ -94,6 +94,14 @@ background noise remains a future NC-03 investigation. Earlier filtering
 experiments predated the corrected payload-format finding and are not
 authoritative for the current PCM16 signal.
 
+After capturing representative corrected PCM16 audio with room/background
+silence and normal speech, offline audition selected a 120 Hz high-pass filter
+followed by +10 dB gain as the preferred balance of speech audibility and
+background noise. A noise gate was intentionally excluded to preserve quiet
+sounds. The application implementation uses this fixed low-latency baseline
+with PCM16 saturation and no large-window/spectral denoising; final live
+physical-camera validation remains pending.
+
 ## Security
 
 Do not expose RTSP/ONVIF ports directly to the Internet. Prefer VPN/Tailscale for remote access.

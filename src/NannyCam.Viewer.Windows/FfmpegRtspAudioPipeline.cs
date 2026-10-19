@@ -15,6 +15,7 @@ internal sealed class FfmpegRtspAudioPipeline : IAsyncDisposable
     private readonly AudioStateMachine _states = new();
     private readonly BoundedPcmBuffer _buffer;
     private readonly Pcm16LePacketAligner _pcm16Aligner = new();
+    private readonly Pcm16AudioProcessor _audioProcessor = new();
     private readonly Uri _uri;
     private readonly CancellationTokenSource _cancellation = new();
     private readonly GCHandle _selfHandle;
@@ -184,6 +185,7 @@ internal sealed class FfmpegRtspAudioPipeline : IAsyncDisposable
         finally
         {
             _pcm16Aligner.Clear();
+            _audioProcessor.Reset();
 
             if (options is not null)
             {
@@ -222,7 +224,9 @@ internal sealed class FfmpegRtspAudioPipeline : IAsyncDisposable
                 return;
             }
 
-            _buffer.Write(alignedPayload.AsSpan(0, completeLength));
+            Span<byte> completeSamples = alignedPayload.AsSpan(0, completeLength);
+            _audioProcessor.ProcessInPlace(completeSamples);
+            _buffer.Write(completeSamples);
         }
         finally
         {

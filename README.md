@@ -28,7 +28,7 @@ Camera RTSP (TCP) -> FFmpeg input + H.264 decoder (worker thread)
                     -> reusable WPF WriteableBitmap (UI thread)
 
 Camera RTSP (TCP) -> FFmpeg audio-only demux (separate worker)
-                    -> verified PCM16 LE payload + bounded live buffer
+                    -> PCM16 LE alignment -> 120 Hz HPF -> +10 dB gain -> bounded live buffer
                     -> NAudio 3.2.0 shared-mode WASAPI -> Windows audio device
 ```
 
@@ -43,6 +43,10 @@ Disconnect uses FFmpeg's input interrupt callback, cancels the worker, and frees
 The camera's RTSP metadata advertises G.711 A-law / PCMA, 8 kHz mono, but physical packet-copy investigation established a firmware/RTSP quirk: ten seconds produced **160,000 bytes**, and the demuxed payload is actually signed PCM16 little-endian, 8 kHz mono. Treating those bytes as A-law caused severe crackling; direct PCM16 LE playback was clear and understandable. FFmpeg is used only to demux the audio-only RTSP session; the payload goes unchanged to Core's PCM buffer, apart from retaining at most one trailing byte when a packet ends mid-sample. The audio buffer is a thread-safe, fixed-size ring: it permits at most **200 ms** (3,200 bytes) of PCM and recovers to at most **100 ms** when an incoming packet would exceed that limit. Normal jitter below the limit is retained. On overflow, the oldest PCM is discarded and the newest audio is retained; a short glitch is preferred over historical playback.
 
 Audio has no synchronization path to video and cannot delay video decoding or presentation. NAudio 3.2.0 uses shared-mode, event-driven WASAPI with a 100 ms requested endpoint latency. Windows may adapt the 8 kHz source format for the selected device. Audio device/pipeline failure is shown separately and does not fail the video connection.
+
+## NC-03 audio cleanup
+
+The live PCM16 path applies a fixed first-order 120 Hz high-pass filter followed by +10 dB amplitude gain, selected after offline audition of a representative corrected PCM16 camera capture. Every processed sample saturates to the PCM16 range instead of wrapping. There is no noise gate, spectral/large-window denoising, AGC, or added buffering: quiet sounds are preserved and the existing live-buffer policy remains unchanged. Final physical-camera validation of this updated live cleanup path is still pending.
 
 ## Known stream and manual latency check
 
