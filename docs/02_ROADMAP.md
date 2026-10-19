@@ -106,7 +106,7 @@ Goal: provide a small Picture-in-Picture-like personal monitoring workflow witho
 - [x] pinned FFmpeg source/build and private-publish notice are included/documented for the bundled runtime
 - [x] multi-size NannyCam Viewer icon embedded in the Windows EXE through `ApplicationIcon`
 - [x] physical validation of the clean Gyan-backed packaged EXE and the complete camera/PiP workflow before the icon change
-- [~] final packaged-startup validation after removing the direct WPF ICO resource binding
+- [x] final packaged-startup validation after removing the direct WPF ICO resource binding; the corrected Gyan-backed EXE launches directly from Explorer and retains the validated camera/PiP workflow
 
 ## Later / optional
 
