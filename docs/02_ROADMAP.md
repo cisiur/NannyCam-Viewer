@@ -84,11 +84,11 @@ Goal: provide focused manual press-and-hold pan/tilt in the Windows viewer witho
 - [x] WPF press-and-hold ▲ ◀ ▶ ▼ controls with mouse capture, release, lost-capture, direction-change, Disconnect, and window-close Stop handling
 - [x] bounded PTZ HTTP requests, serialized movement state, stale-completion protection, and local non-fatal PTZ error status
 - [x] deterministic hardware-free coverage for velocity mapping, WS-Security, SOAP envelopes, fresh nonces, movement lifecycle, and error isolation
-- [~] physical validation: each direction moves while held and stops on release/lost capture/Disconnect; rapid direction changes are safe; video/audio remain live; PTZ errors do not disturb RTSP
+- [x] physical validation: each direction moves while held and stops on release/lost capture/Disconnect; rapid direction changes are safe; video/audio remain live; PTZ errors do not disturb RTSP
 
 ## NC-05 — Personal-use polish
 
-Planned. Not part of NC-01.
+Planned next. Requirements are not defined yet.
 
 ## Later / optional
 

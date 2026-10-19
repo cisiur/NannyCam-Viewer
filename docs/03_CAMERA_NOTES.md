@@ -74,6 +74,8 @@ The PTZ service is `http://192.168.50.207:8899/onvif/PTZ`. Physical ONVIF testin
 
 `GetStatus` succeeds but must not be used for absolute position: after physical movement it continued reporting PanTilt `x="0" y="0"`, Zoom `x="0"`, and `UtcTime` `1970-01-01T00:00:00Z`. The application does not track or display a presumed camera orientation. `GotoHomePosition` was physically verified but is deliberately outside this UI. `GetPresets` exposed slots `1..127`, and zoom is advertised, but presets and zoom remain out of scope.
 
+The direct ONVIF findings above preceded final NC-04 viewer validation. The completed Windows viewer integration was then physically tested successfully: Right, Left, Up, and Down each moved the camera while held, and releasing the direction control stopped it correctly. That validation covers only focused manual pan/tilt; it does not validate presets, Home UI, zoom, absolute/relative moves, or position tracking.
+
 ## Playback findings
 
 Stable combined A/V:

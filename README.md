@@ -1,6 +1,6 @@
 # NannyCam Viewer
 
-Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video; NC-02 provides physically validated independent low-latency audio through Windows WASAPI; NC-03 provides physically validated low-latency audio cleanup; and NC-04 adds manual ONVIF pan/tilt controls awaiting viewer validation. The viewer does not record or capture snapshots.
+Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video; NC-02 provides physically validated independent low-latency audio through Windows WASAPI; NC-03 provides physically validated low-latency audio cleanup; and NC-04 provides physically validated manual ONVIF pan/tilt controls. The viewer does not record or capture snapshots.
 
 ## Run the Windows viewer
 
@@ -60,7 +60,7 @@ Physical validation of the first liveness build (`146cbbd5cee55cdab22679f1add6f8
 
 The compact ▲ ◀ ▶ ▼ pad is enabled after video reaches Connected. Hold one direction to issue ONVIF `ContinuousMove` at the fixed physically verified velocity `0.5`; release, lost mouse capture, direction change, Disconnect, and window close issue best-effort Pan/Tilt `Stop`. PTZ requests are independent asynchronous HTTP/SOAP operations and cannot restart or fail the RTSP video/audio session.
 
-For the current camera, the PTZ endpoint is derived from the RTSP host as `http://<camera-host>:8899/onvif/PTZ`, with profile/node token `000` and the local `admin`/empty-password defaults. Each request uses a new WS-Security UsernameToken nonce and PasswordDigest. The camera requires `Created` to follow its own incorrect clock, so the client derives a short-lived offset from ONVIF Device `GetSystemDateAndTime`; no fixed UTC offset is embedded in movement code. The Windows viewer implementation and automated tests are complete, but physical in-app PTZ validation remains pending.
+For the current camera, the PTZ endpoint is derived from the RTSP host as `http://<camera-host>:8899/onvif/PTZ`, with profile/node token `000` and the local `admin`/empty-password defaults. Each request uses a new WS-Security UsernameToken nonce and PasswordDigest. The camera requires `Created` to follow its own incorrect clock, so the client derives a short-lived offset from ONVIF Device `GetSystemDateAndTime`; no fixed UTC offset is embedded in movement code. The completed Windows viewer integration was physically validated against the camera: all four directions move correctly while held and stop correctly on release. This validation does not cover presets, Home UI, zoom, absolute/relative moves, or position tracking.
 
 ## Known stream and manual latency check
 
