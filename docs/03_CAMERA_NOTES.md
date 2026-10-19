@@ -86,9 +86,13 @@ Stable audio-only:
 ffplay -rtsp_transport tcp -vn -fflags nobuffer -flags low_delay -af "aresample=async=1000:first_pts=0" "rtsp://192.168.50.207:554/streamtype=0"
 ```
 
-The verified direct PCM16 LE interpretation produced acceptable audio without
-problematic background noise. Earlier A-law interpretation caused severe
-crackling; low-latency noise processing remains outside the current scope.
+The corrected PCM16 LE path was validated end-to-end in the Windows application:
+audio is understandable, the prior A-law crackling is gone, audio and video
+remain effectively live without progressive audio-delay accumulation, mute and
+volume work, and Disconnect → Connect restores both pipelines. Audible
+background noise remains a future NC-03 investigation. Earlier filtering
+experiments predated the corrected payload-format finding and are not
+authoritative for the current PCM16 signal.
 
 ## Security
 

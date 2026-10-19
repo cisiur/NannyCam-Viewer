@@ -40,14 +40,14 @@ Goal: play the camera's actual PCM16 LE audio payload through a bounded, indepen
 - [x] stale audio is discarded when the live limit is exceeded; ordinary jitter is retained
 - [x] Core contracts/policy remain free of WPF, NAudio, and Windows audio dependencies
 - [x] separate audio state/error reporting cannot change video connection state
-- [~] play the verified PCM16 LE 8 kHz mono payload through Windows shared-mode WASAPI (implemented; requires final in-app physical-camera/device validation)
-- [~] mute and volume controls (implemented; requires physical-camera/device validation)
-- [~] no progressive audio delay during extended playback (requires final in-app physical-camera validation)
-- [~] Disconnect → Connect recreates audio while preserving the validated video path (requires final in-app physical-camera validation)
+- [x] play the verified PCM16 LE 8 kHz mono payload through Windows shared-mode WASAPI (validated with the physical camera)
+- [x] mute and volume controls (validated with the physical camera)
+- [x] no progressive audio delay during extended playback (validated with the physical camera)
+- [x] Disconnect → Connect recreates audio while preserving the validated video path (validated with the physical camera)
 
 ## NC-03 — Audio cleanup
 
-Planned. Not part of NC-01.
+Planned as the next milestone after NC-02. No audio-cleanup implementation is part of NC-02.
 
 ## NC-04 — ONVIF PTZ
 
