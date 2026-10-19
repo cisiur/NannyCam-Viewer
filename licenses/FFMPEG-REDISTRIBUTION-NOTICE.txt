@@ -1,33 +1,27 @@
-NannyCam Viewer FFmpeg redistribution notice
+NannyCam Viewer FFmpeg private-publish notice
 
-The Windows publish script packages the following separately built FFmpeg runtime:
+The Windows publish script stages the following separately built FFmpeg runtime
+for the project's current private/local Windows package:
 
-  Supplier: BtbN/FFmpeg-Builds
-  Release tag: autobuild-2026-10-19-13-06
-  Asset: ffmpeg-n9.0.2-28-g669f5ab083-win64-lgpl-shared-9.0.zip
-  SHA-256: 557513674c1628d82cad40515d75bc28d26c4730582b4029b018c4a1ff77a49c
+  Supplier: GyanD/codexffmpeg (gyan.dev FFmpeg builds)
+  Release tag: 9.0.2
+  Asset: ffmpeg-9.0.2-full_build-shared.7z
+  SHA-256: 4d2060a8b34a940aa47d785142055bb92a63053781e55f2ace4546edd519a8f5
   Target: Windows x64 shared libraries
   FFmpeg release line: 9.0.2
-  Variant: LGPL shared (as identified by the upstream asset name)
-  Download: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-19-13-06/ffmpeg-n9.0.2-28-g669f5ab083-win64-lgpl-shared-9.0.zip
+  Variant: full shared
+  Download: https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-full_build-shared.7z
 
-The distribution keeps the FFmpeg libraries as replaceable DLLs in the
-ffmpeg directory. The publish script also copies the license files supplied
-at the top level of the upstream archive into licenses/ffmpeg beside this
-notice. Keep those files with any redistributed package.
+The distribution keeps all DLLs supplied by the archive's bin directory as
+replaceable DLLs in the ffmpeg directory. The publish script also copies the
+license files supplied at the top level of the upstream archive into
+licenses/ffmpeg beside this notice when it creates the local package.
 
-FFmpeg licensing depends on its build configuration. FFmpeg's own legal page
-states that an LGPL build must not enable GPL or nonfree components, and that
-dynamic linking is the expected Windows distribution form. This package uses
-the BtbN asset explicitly labeled "lgpl-shared"; it does not package the
-locally installed Gyan full shared build, which is published as GPL-3.0-or-later.
+Generated FFmpeg DLLs and generated publish artifacts are ignored by Git and
+are not committed to this repository. This workflow is intended only for the
+current personal/private local use. Third-party redistribution is outside the
+current project scope and requires a separate review of the exact upstream
+archive, included license files, and applicable FFmpeg/build licensing
+obligations.
 
-Corresponding FFmpeg source and licensing information:
-  https://ffmpeg.org/download.html
-  https://ffmpeg.org/legal.html
-  https://github.com/FFmpeg/FFmpeg/tree/669f5ab083
-  https://github.com/BtbN/FFmpeg-Builds
-
-This notice is technical redistribution information, not legal advice. Anyone
-redistributing NannyCam Viewer remains responsible for reviewing the exact
-upstream archive, included license files, and applicable FFmpeg obligations.
+This notice records the packaged runtime source and is not legal advice.

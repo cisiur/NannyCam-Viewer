@@ -38,10 +38,10 @@ if (-not (Test-Path -LiteralPath $noticePath)) {
     throw "Required FFmpeg redistribution notice was not found at '$noticePath'."
 }
 
-$ffmpegReleaseTag = 'autobuild-2026-10-19-13-06'
-$ffmpegAssetName = 'ffmpeg-n9.0.2-28-g669f5ab083-win64-lgpl-shared-9.0.zip'
-$ffmpegSha256 = '557513674c1628d82cad40515d75bc28d26c4730582b4029b018c4a1ff77a49c'
-$ffmpegAssetUri = "https://github.com/BtbN/FFmpeg-Builds/releases/download/$ffmpegReleaseTag/$ffmpegAssetName"
+$ffmpegReleaseTag = '9.0.2'
+$ffmpegAssetName = 'ffmpeg-9.0.2-full_build-shared.7z'
+$ffmpegSha256 = '4d2060a8b34a940aa47d785142055bb92a63053781e55f2ace4546edd519a8f5'
+$ffmpegAssetUri = "https://github.com/GyanD/codexffmpeg/releases/download/$ffmpegReleaseTag/$ffmpegAssetName"
 $cacheRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'NannyCam-Viewer\ffmpeg-cache'
 $temporaryRoot = Join-Path ([System.IO.Path]::GetTempPath()) "NannyCam-Viewer\ffmpeg-stage-$ffmpegReleaseTag"
 $archivePath = Join-Path $cacheRoot $ffmpegAssetName
@@ -73,7 +73,16 @@ try {
         throw "Downloaded FFmpeg archive SHA-256 did not match the pinned value. Expected '$ffmpegSha256', got '$actualSha256'."
     }
 
-    Expand-Archive -LiteralPath $archivePath -DestinationPath $extractPath -Force
+    $tarCommand = Get-Command tar.exe -ErrorAction SilentlyContinue
+    if ($null -eq $tarCommand) {
+        throw "The pinned Gyan .7z archive requires Windows tar.exe (libarchive), but tar.exe was not found."
+    }
+
+    New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+    & $tarCommand.Source -xf $archivePath -C $extractPath
+    if ($LASTEXITCODE -ne 0) {
+        throw "Windows tar.exe could not extract the verified Gyan FFmpeg archive."
+    }
 
     $ffmpegRoot = Get-ChildItem -LiteralPath $extractPath -Directory | Select-Object -First 1
     if ($null -eq $ffmpegRoot) {

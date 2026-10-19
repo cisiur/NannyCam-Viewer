@@ -14,7 +14,7 @@ The script produces `artifacts\publish\win-x64\`. Open that folder and double-cl
 
 ## Developer run/debug workflow
 
-For development, install the .NET 10 SDK and provide a complete FFmpeg 9 x64 shared-DLL build. `FFmpeg.AutoGen` 9.0.1.1 uses FFmpeg 9 ABI libraries; the validated Gyan 9.0.2 shared build remains suitable for local development but is not redistributed by this project. Set `FFMPEG_ROOT` to the DLL directory (or its parent), then run:
+For development, install the .NET 10 SDK and provide a complete FFmpeg 9 x64 shared-DLL build. `FFmpeg.AutoGen` 9.0.1.1 uses FFmpeg 9 ABI libraries; the physically validated runtime is Gyan FFmpeg 9.0.2 full shared. Set `FFMPEG_ROOT` to the DLL directory (or its parent), then run:
 
 ```powershell
 dotnet run --project src/NannyCam.Viewer.Windows
@@ -22,7 +22,9 @@ dotnet run --project src/NannyCam.Viewer.Windows
 
 `FFMPEG_ROOT` is an explicit developer override. Without it, the application first looks for bundled DLLs in `ffmpeg\` relative to `AppContext.BaseDirectory`, then retains the repository `runtime\ffmpeg` working-directory fallback for local development.
 
-The publish script instead downloads and SHA-256-verifies the pinned BtbN `ffmpeg-n9.0.2-28-g669f5ab083-win64-lgpl-shared-9.0.zip` asset, copies all of its DLLs to `ffmpeg\`, and places the upstream license files plus `licenses\ffmpeg\NannyCam-FFmpeg-Redistribution-Notice.txt` in the distribution. See that notice before redistributing the folder.
+The publish script downloads and SHA-256-verifies the pinned Gyan `ffmpeg-9.0.2-full_build-shared.7z` asset from the upstream GyanD/codexffmpeg 9.0.2 release, copies **all** DLLs from its `bin\` directory to `ffmpeg\`, and places the upstream license files plus `licenses\ffmpeg\NannyCam-FFmpeg-Redistribution-Notice.txt` in the generated folder. A physical A/B test found that the earlier BtbN FFmpeg 9.0.2 shared runtime allowed startup but did not connect to this camera; replacing only its local `ffmpeg\` directory with Gyan 9.0.2 full shared DLLs made the same packaged EXE work. This is a camera/application-specific result, not a general claim about BtbN builds.
+
+The generated DLLs and publish output are not committed. This workflow is currently for personal/private local use; any third-party redistribution would require a separate review of the exact upstream archive, included license files, and applicable FFmpeg/build licensing obligations.
 
 If the DLLs cannot be found or loaded, the connection status reports the setup error instead of crashing the application.
 

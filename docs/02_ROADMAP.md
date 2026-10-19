@@ -99,12 +99,12 @@ Goal: provide a small Picture-in-Picture-like personal monitoring workflow witho
 - [x] Camera-only preview-background drag, native edge/corner resize behavior, 320×180 compact minimum, and 800×500 normal minimum restoration without a forced outer aspect ratio
 - [x] deterministic hardware-free tests for presentation state, compact/normal size policy, Always on Top preservation, media isolation, and compact-mode PTZ safety
 - [x] self-contained Windows x64 folder publish with `PublishSingleFile=false` and trimming disabled
-- [x] pinned compatible FFmpeg 9.0.2 x64 LGPL shared runtime bundled beside the packaged EXE
+- [x] pinned physically validated Gyan FFmpeg 9.0.2 full shared x64 runtime bundled beside the packaged EXE
 - [x] packaged FFmpeg discovery relative to the application directory, with optional `FFMPEG_ROOT` developer override
-- [x] reproducible `scripts/publish-windows.ps1` stages FFmpeg DLLs and redistribution/license information
+- [x] reproducible `scripts/publish-windows.ps1` stages all Gyan shared-runtime DLLs and private-publish/license information
 - [x] packaged app requires no system FFmpeg, `FFMPEG_ROOT`, or separately installed .NET runtime
-- [x] FFmpeg source/build and redistribution notice are included/documented for the bundled runtime
-- [~] final physical validation of the packaged EXE and the previously implemented PiP workflow
+- [x] pinned FFmpeg source/build and private-publish notice are included/documented for the bundled runtime
+- [~] final physical validation of the clean Gyan-backed packaged EXE and the complete PiP workflow
 
 ## Later / optional
 
