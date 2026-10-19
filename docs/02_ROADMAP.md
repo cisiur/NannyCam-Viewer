@@ -65,6 +65,10 @@ Goal: maintain Connect intent until Disconnect or window close, automatically re
 - [x] dispose failed video/audio attempts before retrying; prevent overlapping attempts and stale callbacks
 - [x] reconnect after video connection loss while keeping video authoritative and audio failure isolated
 - [x] deterministic hardware-free lifecycle tests for retry, cancellation, disposal, stale callbacks, replacement Connect, and audio/video isolation
+- [x] rolling 5 s monotonic FFmpeg video liveness deadline bounds blocked initial connection and stalled established streams; packet/frame progress refreshes it
+- [x] liveness expiry is a video failure that is disposed and retried; explicit Disconnect remains distinct cancellable shutdown
+- [x] construct the WPF session before XAML control initialization and clear frozen preview content while reconnecting
+- [x] deterministic Core tests cover initial timeout, progress refresh, indefinite healthy progress, and cancellation precedence
 - [~] physical validation: initially offline camera recovers after one Connect; established connection loss recovers; Disconnect cancels retry with no later attempt; recovered media remains live with one video/audio pipeline
 
 ## NC-04 — ONVIF PTZ

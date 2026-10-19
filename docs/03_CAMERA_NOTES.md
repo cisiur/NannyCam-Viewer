@@ -111,9 +111,14 @@ Before NC-03A, starting the application with the camera powered off and
 clicking Connect left the viewer unable to recover automatically after the
 camera was powered on. The viewer now treats Connect as persistent connection
 intent and retries RTSP video using cancellable 1 s, 2 s, 3 s, then repeated
-5 s delays. Video remains the authoritative connection signal; audio remains
-independent. Physical validation remains pending for initial-offline recovery,
-recovery after a live connection loss, and Disconnect cancellation during retry.
+5 s delays. Each FFmpeg video attempt also has a rolling five-second monotonic
+no-progress deadline, beginning before RTSP opening and refreshed by received
+video packets and decoded frames. A liveness expiry is a retryable video error;
+an explicit Disconnect remains a separate cancellation path. Reconnecting
+clears an old frozen preview until a fresh frame arrives. Video remains the
+authoritative connection signal; audio remains independent. Physical validation
+remains pending for initial-offline recovery, recovery after a live connection
+loss, and Disconnect cancellation during retry.
 
 ## Security
 

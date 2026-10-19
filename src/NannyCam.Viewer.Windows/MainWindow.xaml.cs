@@ -20,8 +20,9 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        InitializeComponent();
         _session = new CameraConnectionSession(new FfmpegCameraConnectionAttemptFactory());
+        InitializeComponent();
+
         _session.StatusChanged += Session_StatusChanged;
         _session.FrameAvailable += Session_FrameAvailable;
         _session.AudioStatusChanged += Session_AudioStatusChanged;
@@ -64,6 +65,11 @@ public partial class MainWindow : Window
             if (!ReferenceEquals(sender, _session) || _session.Status != status)
             {
                 return;
+            }
+
+            if (status.State == ConnectionState.Reconnecting)
+            {
+                ClearViewport("Camera unavailable — reconnecting…");
             }
 
             SetStatus(status.Message);
@@ -184,10 +190,11 @@ public partial class MainWindow : Window
 
     private void SetAudioStatus(string message) => AudioStatusText.Text = message;
 
-    private void ClearViewport()
+    private void ClearViewport(string message = "Camera preview")
     {
         _bitmap = null;
         VideoImage.Source = null;
+        ViewportMessage.Text = message;
         ViewportMessage.Visibility = Visibility.Visible;
     }
 

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using FFmpeg.AutoGen;
 using NannyCam.Core;
@@ -11,15 +12,18 @@ namespace NannyCam.Viewer.Windows;
 internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
 {
     private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan StreamLivenessTimeout = TimeSpan.FromSeconds(5);
     private readonly ConnectionStateMachine _states = new();
     private readonly LatestVideoFrameSlot _frames = new();
     private readonly Uri _uri;
     private readonly CancellationTokenSource _cancellation = new();
+    private readonly StreamLivenessPolicy _liveness = new(StreamLivenessTimeout, Stopwatch.Frequency);
     private readonly GCHandle _selfHandle;
     private readonly AVIOInterruptCB_callback _interruptDelegate;
     private readonly AVIOInterruptCB_callback_func _interruptCallback;
     private Task? _worker;
     private int _stopRequested;
+    private int _interruptionReason;
     private bool _connected;
     private bool _disposed;
     private int _managedResourcesReleased;
@@ -112,6 +116,7 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
 
         try
         {
+            _liveness.Start(Stopwatch.GetTimestamp());
             FfmpegRuntime.EnsureLoaded();
             ThrowIfError(ffmpeg.avformat_network_init(), "initialize FFmpeg networking");
 
@@ -134,12 +139,12 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
             SetOption(&options, "allowed_media_types", "video");
 
             AVFormatContext* openedFormat = format;
-            ThrowIfError(ffmpeg.avformat_open_input(&openedFormat, _uri.AbsoluteUri, null, &options), "open RTSP input");
+            ThrowIfErrorOrInterrupted(ffmpeg.avformat_open_input(&openedFormat, _uri.AbsoluteUri, null, &options), "open RTSP input");
             format = openedFormat;
-            ThrowIfError(ffmpeg.avformat_find_stream_info(format, null), "read RTSP stream information");
+            ThrowIfErrorOrInterrupted(ffmpeg.avformat_find_stream_info(format, null), "read RTSP stream information");
 
             int streamIndex = ffmpeg.av_find_best_stream(format, AVMediaType.AVMEDIA_TYPE_VIDEO, -1, -1, null, 0);
-            ThrowIfError(streamIndex, "find the video stream");
+            ThrowIfErrorOrInterrupted(streamIndex, "find the video stream");
 
             AVStream* stream = format->streams[streamIndex];
             AVCodec* decoder = ffmpeg.avcodec_find_decoder(stream->codecpar->codec_id);
@@ -154,10 +159,10 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
                 throw new InvalidOperationException("FFmpeg could not allocate an H.264 decoder context.");
             }
 
-            ThrowIfError(ffmpeg.avcodec_parameters_to_context(codec, stream->codecpar), "configure the H.264 decoder");
+            ThrowIfErrorOrInterrupted(ffmpeg.avcodec_parameters_to_context(codec, stream->codecpar), "configure the H.264 decoder");
             codec->flags |= ffmpeg.AV_CODEC_FLAG_LOW_DELAY;
             codec->thread_count = 1;
-            ThrowIfError(ffmpeg.avcodec_open2(codec, decoder, null), "open the H.264 decoder");
+            ThrowIfErrorOrInterrupted(ffmpeg.avcodec_open2(codec, decoder, null), "open the H.264 decoder");
 
             packet = ffmpeg.av_packet_alloc();
             decoded = ffmpeg.av_frame_alloc();
@@ -171,13 +176,15 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
                 int readResult = ffmpeg.av_read_frame(format, packet);
                 if (readResult < 0)
                 {
-                    ThrowIfStopping(readResult);
+                    ThrowIfInterrupted();
                     ThrowIfError(readResult, "read from the RTSP stream");
                 }
 
+                _liveness.RecordProgress(Stopwatch.GetTimestamp());
+
                 if (packet->stream_index == streamIndex)
                 {
-                    ThrowIfError(ffmpeg.avcodec_send_packet(codec, packet), "send a video packet to the decoder");
+                    ThrowIfErrorOrInterrupted(ffmpeg.avcodec_send_packet(codec, packet), "send a video packet to the decoder");
                     ReceiveAvailableFrames(codec, decoded, ref converter);
                 }
 
@@ -253,7 +260,7 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
                 return;
             }
 
-            ThrowIfError(receiveResult, "receive a decoded video frame");
+            ThrowIfErrorOrInterrupted(receiveResult, "receive a decoded video frame");
             PublishFrame(decoded, ref converter);
             ffmpeg.av_frame_unref(decoded);
         }
@@ -261,6 +268,7 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
 
     private unsafe void PublishFrame(AVFrame* decoded, ref SwsContext* converter)
     {
+        _liveness.RecordProgress(Stopwatch.GetTimestamp());
         int width = decoded->width;
         int height = decoded->height;
         if (width <= 0 || height <= 0)
@@ -320,12 +328,30 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
         ThrowIfError(ffmpeg.av_dict_set(options, key, value, 0), $"set FFmpeg option '{key}'");
     }
 
-    private void ThrowIfStopping(int result)
+    private void ThrowIfInterrupted()
     {
-        if (_cancellation.IsCancellationRequested || Volatile.Read(ref _stopRequested) != 0)
+        StreamInterruptionReason reason = (StreamInterruptionReason)Volatile.Read(ref _interruptionReason);
+        if (reason is StreamInterruptionReason.CancellationRequested ||
+            _cancellation.IsCancellationRequested ||
+            Volatile.Read(ref _stopRequested) != 0)
         {
             throw new OperationCanceledException(_cancellation.Token);
         }
+
+        if (reason == StreamInterruptionReason.LivenessTimeout)
+        {
+            throw new TimeoutException($"Camera video stream timed out after {StreamLivenessTimeout.TotalSeconds:0} seconds without progress.");
+        }
+    }
+
+    private void ThrowIfErrorOrInterrupted(int result, string operation)
+    {
+        if (result < 0)
+        {
+            ThrowIfInterrupted();
+        }
+
+        ThrowIfError(result, operation);
     }
 
     private static void ThrowIfError(int result, string operation)
@@ -346,7 +372,21 @@ internal sealed class FfmpegRtspVideoPipeline : IAsyncDisposable
     private static unsafe int InterruptCallback(void* opaque)
     {
         GCHandle handle = GCHandle.FromIntPtr((nint)opaque);
-        return handle.Target is FfmpegRtspVideoPipeline pipeline && Volatile.Read(ref pipeline._stopRequested) != 0 ? 1 : 0;
+        if (handle.Target is not FfmpegRtspVideoPipeline pipeline)
+        {
+            return 0;
+        }
+
+        StreamInterruptionReason reason = pipeline._liveness.GetInterruptionReason(
+            Stopwatch.GetTimestamp(),
+            pipeline._cancellation.IsCancellationRequested || Volatile.Read(ref pipeline._stopRequested) != 0);
+        if (reason == StreamInterruptionReason.None)
+        {
+            return 0;
+        }
+
+        Interlocked.CompareExchange(ref pipeline._interruptionReason, (int)reason, (int)StreamInterruptionReason.None);
+        return 1;
     }
 
     private void OnStatusChanged() => StatusChanged?.Invoke(this, _states.Status);
