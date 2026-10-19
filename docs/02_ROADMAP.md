@@ -71,11 +71,11 @@ Goal: maintain Connect intent until Disconnect or window close, automatically re
 - [x] deterministic Core tests cover initial timeout, progress refresh, indefinite healthy progress, and cancellation precedence
 - [x] native ownership corrective: `avformat_open_input` updates the authoritative context pointer before any error/timeout is thrown, preventing stale-pointer cleanup
 - [x] audit native worker cleanup: the worker owns FFmpeg contexts/dictionaries and releases its callback handle only after the worker has exited
-- [~] physical validation: initially offline camera recovers after one Connect; established connection loss recovers; Disconnect cancels retry with no later attempt; recovered media remains live with one video/audio pipeline
+- [x] physical validation: initially offline camera recovers after one Connect; established connection loss recovers; Disconnect cancels retry with no later attempt; recovered media remains live with one video/audio pipeline
 
 ## NC-04 — ONVIF PTZ
 
-Planned after NC-03A physical validation.
+Planned next.
 
 ## NC-05 — Personal-use polish
 

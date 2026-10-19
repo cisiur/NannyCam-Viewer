@@ -117,10 +117,12 @@ video packets and decoded frames. A liveness expiry is a retryable video error;
 an explicit Disconnect remains a separate cancellation path. Reconnecting
 clears an old frozen preview until a fresh frame arrives. Video remains the
 authoritative connection signal; audio remains independent. Physical validation
-remains pending for initial-offline recovery, recovery after a live connection
-loss, and Disconnect cancellation during retry.
+confirmed that the viewer remains stable through repeated offline retries,
+automatically restores video/audio when the camera becomes available or returns
+after an established loss, clears stale video while reconnecting, and honours
+user-controlled Disconnect cancellation.
 
-Physical testing of the first liveness build (`146cbbd5cee55cdab22679f1add6f849dcdd4822`) found a native `0xC0000005` process termination when FFmpeg input was interrupted during initial connection or after video loss. The corrective keeps the `AVFormatContext*` passed to `avformat_open_input` authoritative even if FFmpeg replaces or clears it during a failed/interrupted call, so cleanup cannot later close the stale pre-call pointer. This requires real-camera retesting; NC-03A remains pending.
+Physical testing of the first liveness build (`146cbbd5cee55cdab22679f1add6f849dcdd4822`) found a native `0xC0000005` process termination when FFmpeg input was interrupted during initial connection or after video loss. The corrective keeps the `AVFormatContext*` passed to `avformat_open_input` authoritative even if FFmpeg replaces or clears it during a failed/interrupted call, so cleanup cannot later close the stale pre-call pointer. The corrected implementation was subsequently validated against the physical camera: the crash was not reproduced, retries continued normally, and automatic recovery restored live video/audio without another Connect.
 
 ## Security
 
