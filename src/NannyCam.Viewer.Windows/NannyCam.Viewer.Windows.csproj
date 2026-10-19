@@ -5,9 +5,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>NannyCam.Viewer.Windows</AssemblyName>
     <RootNamespace>NannyCam.Viewer.Windows</RootNamespace>
+    <ApplicationIcon>Assets\NannyCamViewer.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\NannyCamViewer.ico" />
     <ProjectReference Include="../NannyCam.Core/NannyCam.Core.csproj" />
     <PackageReference Include="FFmpeg.AutoGen" Version="9.0.1.1" />
     <PackageReference Include="NAudio" Version="3.2.0" />
