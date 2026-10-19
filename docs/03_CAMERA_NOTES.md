@@ -66,6 +66,14 @@ HardwareId: 00001
 
 The ONVIF camera clock was observed about two hours ahead of actual UTC during CEST.
 
+## ONVIF PTZ findings
+
+The PTZ service is `http://192.168.50.207:8899/onvif/PTZ`. Physical ONVIF testing used media profile token `000`, PTZ node token `000`, and WS-Security UsernameToken `admin` with an empty password. The camera accepts PasswordDigest authentication using `Base64(SHA1(NonceBytes + UTF8(Created) + UTF8(Password)))`; every request must use a new random nonce. It currently requires `Created` to track its own incorrectly configured clock, so the viewer derives a camera-time offset through the Device service instead of embedding a `+2 hours` assumption.
+
+`GetNodes` reported `http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace` with X/Y ranges `-1..+1`. `ContinuousMove` and `Stop` were physically verified. A velocity magnitude of `0.5` produced clear movement: right is positive X, left negative X, up positive Y, and down negative Y. `Stop` uses `PanTilt=true`; zoom is not part of NC-04.
+
+`GetStatus` succeeds but must not be used for absolute position: after physical movement it continued reporting PanTilt `x="0" y="0"`, Zoom `x="0"`, and `UtcTime` `1970-01-01T00:00:00Z`. The application does not track or display a presumed camera orientation. `GotoHomePosition` was physically verified but is deliberately outside this UI. `GetPresets` exposed slots `1..127`, and zoom is advertised, but presets and zoom remain out of scope.
+
 ## Playback findings
 
 Stable combined A/V:

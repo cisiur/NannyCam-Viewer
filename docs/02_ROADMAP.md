@@ -75,7 +75,16 @@ Goal: maintain Connect intent until Disconnect or window close, automatically re
 
 ## NC-04 — ONVIF PTZ
 
-Planned next.
+Goal: provide focused manual press-and-hold pan/tilt in the Windows viewer without affecting live RTSP media behavior.
+
+- [x] focused Windows ONVIF client for asynchronous `ContinuousMove` and Pan/Tilt `Stop`
+- [x] WS-Security UsernameToken PasswordDigest with a fresh cryptographic nonce per request
+- [x] camera-time offset derived from ONVIF Device `GetSystemDateAndTime`; no fixed clock offset in movement logic
+- [x] correct `0.5` normalized velocity mapping: right/left X and up/down Y
+- [x] WPF press-and-hold ▲ ◀ ▶ ▼ controls with mouse capture, release, lost-capture, direction-change, Disconnect, and window-close Stop handling
+- [x] bounded PTZ HTTP requests, serialized movement state, stale-completion protection, and local non-fatal PTZ error status
+- [x] deterministic hardware-free coverage for velocity mapping, WS-Security, SOAP envelopes, fresh nonces, movement lifecycle, and error isolation
+- [~] physical validation: each direction moves while held and stops on release/lost capture/Disconnect; rapid direction changes are safe; video/audio remain live; PTZ errors do not disturb RTSP
 
 ## NC-05 — Personal-use polish
 

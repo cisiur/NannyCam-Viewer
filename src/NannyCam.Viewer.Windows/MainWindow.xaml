@@ -20,6 +20,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="140" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <TextBox x:Name="RtspUriTextBox"
@@ -50,6 +51,50 @@
                     VerticalAlignment="Center"
                     ValueChanged="VolumeSlider_ValueChanged"
                     ToolTip="Audio volume" />
+            <Grid x:Name="PtzPad"
+                  Grid.Column="5"
+                  Margin="16,0,0,0"
+                  IsEnabled="False"
+                  ToolTip="Hold a direction to move the camera">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="28" />
+                    <RowDefinition Height="28" />
+                    <RowDefinition Height="28" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="28" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Row="0"
+                        Grid.Column="1"
+                        Tag="Up"
+                        Padding="0"
+                        PreviewMouseLeftButtonDown="PtzDirection_MouseLeftButtonDown"
+                        PreviewMouseLeftButtonUp="PtzDirection_MouseLeftButtonUp"
+                        LostMouseCapture="PtzDirection_LostMouseCapture">▲</Button>
+                <Button Grid.Row="1"
+                        Grid.Column="0"
+                        Tag="Left"
+                        Padding="0"
+                        PreviewMouseLeftButtonDown="PtzDirection_MouseLeftButtonDown"
+                        PreviewMouseLeftButtonUp="PtzDirection_MouseLeftButtonUp"
+                        LostMouseCapture="PtzDirection_LostMouseCapture">◀</Button>
+                <Button Grid.Row="1"
+                        Grid.Column="2"
+                        Tag="Right"
+                        Padding="0"
+                        PreviewMouseLeftButtonDown="PtzDirection_MouseLeftButtonDown"
+                        PreviewMouseLeftButtonUp="PtzDirection_MouseLeftButtonUp"
+                        LostMouseCapture="PtzDirection_LostMouseCapture">▶</Button>
+                <Button Grid.Row="2"
+                        Grid.Column="1"
+                        Tag="Down"
+                        Padding="0"
+                        PreviewMouseLeftButtonDown="PtzDirection_MouseLeftButtonDown"
+                        PreviewMouseLeftButtonUp="PtzDirection_MouseLeftButtonUp"
+                        LostMouseCapture="PtzDirection_LostMouseCapture">▼</Button>
+            </Grid>
         </Grid>
 
         <Border Grid.Row="1"
@@ -78,6 +123,10 @@
             <Separator />
             <StatusBarItem>
                 <TextBlock x:Name="AudioStatusText" Text="Audio stopped" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock x:Name="PtzStatusText" Text="PTZ unavailable" />
             </StatusBarItem>
         </StatusBar>
     </Grid>

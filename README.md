@@ -1,6 +1,6 @@
 # NannyCam Viewer
 
-Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video; NC-02 provides physically validated independent low-latency audio through Windows WASAPI; and NC-03 provides physically validated low-latency audio cleanup. The viewer does not record, capture snapshots, or provide ONVIF/PTZ.
+Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video; NC-02 provides physically validated independent low-latency audio through Windows WASAPI; NC-03 provides physically validated low-latency audio cleanup; and NC-04 adds manual ONVIF pan/tilt controls awaiting viewer validation. The viewer does not record or capture snapshots.
 
 ## Run the Windows viewer
 
@@ -30,6 +30,8 @@ Camera RTSP (TCP) -> FFmpeg input + H.264 decoder (worker thread)
 Camera RTSP (TCP) -> FFmpeg audio-only demux (separate worker)
                     -> PCM16 LE alignment -> 120 Hz HPF -> +10 dB gain -> bounded live buffer
                     -> NAudio 3.2.0 shared-mode WASAPI -> Windows audio device
+
+WPF press-and-hold PTZ pad -> ONVIF SOAP/WS-Security -> camera PTZ service
 ```
 
 `NannyCam.Core` targets cross-platform .NET and contains the URI validation, connection-state policy, UI-free `VideoFrame`, and one-item latest-frame slot. It has no WPF or Windows-frontend reference. `NannyCam.Viewer.Windows` owns FFmpeg native runtime discovery, decoding, WPF lifecycle, and rendering.
@@ -53,6 +55,12 @@ The live PCM16 path applies a fixed first-order 120 Hz high-pass filter followed
 Connect establishes persistent intent to reach the configured camera until Disconnect or window close. A single session coordinator owns disposable video/audio attempts and retries unavailable or lost video with a cancellable bounded schedule of **1, 2, 3, then 5 seconds** repeatedly. Each single-attempt video worker uses FFmpeg's input interrupt callback with a rolling, monotonic **5-second** no-progress deadline: it starts before RTSP opening and refreshes for received video packets and decoded frames. Expiry becomes a video error, so the coordinator can dispose the attempt and retry; explicit Disconnect remains a distinct cancellation path. The UI shows Connecting, Reconnecting, Connected, or Disconnected and clears any frozen preview while reconnecting. Video remains authoritative: a decoded video frame marks success, while audio remains independent and cannot reconnect or tear down healthy video. Existing low-latency video/audio policies are unchanged. The completed physical-camera validation confirmed initial-offline retry, automatic recovery when the camera becomes available, recovery after an established camera loss, and user-controlled Disconnect cancellation.
 
 Physical validation of the first liveness build (`146cbbd5cee55cdab22679f1add6f849dcdd4822`) exposed a native `0xC0000005` process termination when FFmpeg input was interrupted. The corrective keeps the `AVFormatContext*` passed to `avformat_open_input` as the authoritative cleanup pointer even on failure or interruption. The corrected implementation was subsequently validated against the physical camera: no native crash occurred across repeated unavailable attempts or connection loss, and video/audio recovered automatically when the camera returned.
+
+## NC-04 manual ONVIF pan/tilt
+
+The compact ▲ ◀ ▶ ▼ pad is enabled after video reaches Connected. Hold one direction to issue ONVIF `ContinuousMove` at the fixed physically verified velocity `0.5`; release, lost mouse capture, direction change, Disconnect, and window close issue best-effort Pan/Tilt `Stop`. PTZ requests are independent asynchronous HTTP/SOAP operations and cannot restart or fail the RTSP video/audio session.
+
+For the current camera, the PTZ endpoint is derived from the RTSP host as `http://<camera-host>:8899/onvif/PTZ`, with profile/node token `000` and the local `admin`/empty-password defaults. Each request uses a new WS-Security UsernameToken nonce and PasswordDigest. The camera requires `Created` to follow its own incorrect clock, so the client derives a short-lived offset from ONVIF Device `GetSystemDateAndTime`; no fixed UTC offset is embedded in movement code. The Windows viewer implementation and automated tests are complete, but physical in-app PTZ validation remains pending.
 
 ## Known stream and manual latency check
 
