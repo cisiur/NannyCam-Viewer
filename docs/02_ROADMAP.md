@@ -32,7 +32,18 @@ Goal: show `streamtype=0` in the Windows frontend with latency comparable to the
 
 ## NC-02 — Independent low-latency audio
 
-Planned. Not part of NC-01.
+Goal: play the camera's PCMA audio through a bounded, independent live-audio path without affecting video freshness.
+
+- [x] platform-neutral G.711 A-law / PCMA to PCM16 decoder with known-vector tests
+- [x] independent audio-only RTSP/TCP demux worker; it does not decode or present video
+- [x] bounded 200 ms PCM buffer with 100 ms stale-audio recovery policy
+- [x] stale audio is discarded when the live limit is exceeded; ordinary jitter is retained
+- [x] Core contracts/policy remain free of WPF, NAudio, and Windows audio dependencies
+- [x] separate audio state/error reporting cannot change video connection state
+- [~] play PCMA 8 kHz mono audio through Windows shared-mode WASAPI (implemented; requires physical-camera/device validation)
+- [~] mute and volume controls (implemented; requires physical-camera/device validation)
+- [~] no progressive audio delay during extended playback (requires physical-camera validation)
+- [~] Disconnect → Connect recreates audio while preserving the validated video path (requires physical-camera validation)
 
 ## NC-03 — Audio cleanup
 
