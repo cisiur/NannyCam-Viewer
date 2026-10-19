@@ -2,13 +2,27 @@
 
 Small local Windows viewer for a TrueLife NannyCam R3 Smart camera. NC-01 provides physically validated low-latency RTSP/H.264 video; NC-02 provides physically validated independent low-latency audio through Windows WASAPI; NC-03 provides physically validated low-latency audio cleanup; and NC-04 provides physically validated manual ONVIF pan/tilt controls. The viewer does not record or capture snapshots.
 
-## Run the Windows viewer
+## Run the packaged Windows viewer
 
-1. Install the .NET 10 SDK.
-2. Supply a complete **FFmpeg 9.0.1 x64 shared-DLL build**. The selected `FFmpeg.AutoGen` package is `9.0.1.1`, whose bindings are generated for FFmpeg 9.0.1; FFmpeg 8 or earlier DLLs are not compatible.
-3. Either set `FFMPEG_ROOT` to the directory containing the DLLs (or its parent `bin` directory), or copy them into the ignored `runtime/ffmpeg/bin/` directory at the repository root. The app also checks `ffmpeg/bin/` beside its executable.
-4. The folder must contain at least `avcodec-63.dll`, `avformat-63.dll`, `avutil-61.dll`, and `swscale-10.dll`, plus every dependency distributed by the same FFmpeg build. Do not commit these binaries.
-5. Run `dotnet run --project src/NannyCam.Viewer.Windows`.
+Create the portable Windows x64 distribution from a checkout with the .NET 10 SDK:
+
+```powershell
+.\scripts\publish-windows.ps1
+```
+
+The script produces `artifacts\publish\win-x64\`. Open that folder and double-click `NannyCam.Viewer.Windows.exe`. It is a **self-contained** .NET publish, and its `ffmpeg\` subdirectory contains the compatible native runtime, so the target Windows x64 machine needs no .NET Desktop Runtime, FFmpeg installation, `PATH` change, or `FFMPEG_ROOT` setup. The distribution is intentionally a folder, not a forced single-file executable.
+
+## Developer run/debug workflow
+
+For development, install the .NET 10 SDK and provide a complete FFmpeg 9 x64 shared-DLL build. `FFmpeg.AutoGen` 9.0.1.1 uses FFmpeg 9 ABI libraries; the validated Gyan 9.0.2 shared build remains suitable for local development but is not redistributed by this project. Set `FFMPEG_ROOT` to the DLL directory (or its parent), then run:
+
+```powershell
+dotnet run --project src/NannyCam.Viewer.Windows
+```
+
+`FFMPEG_ROOT` is an explicit developer override. Without it, the application first looks for bundled DLLs in `ffmpeg\` relative to `AppContext.BaseDirectory`, then retains the repository `runtime\ffmpeg` working-directory fallback for local development.
+
+The publish script instead downloads and SHA-256-verifies the pinned BtbN `ffmpeg-n9.0.2-28-g669f5ab083-win64-lgpl-shared-9.0.zip` asset, copies all of its DLLs to `ffmpeg\`, and places the upstream license files plus `licenses\ffmpeg\NannyCam-FFmpeg-Redistribution-Notice.txt` in the distribution. See that notice before redistributing the folder.
 
 If the DLLs cannot be found or loaded, the connection status reports the setup error instead of crashing the application.
 

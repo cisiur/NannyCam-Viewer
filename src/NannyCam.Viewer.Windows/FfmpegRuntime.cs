@@ -6,8 +6,7 @@ using FFmpeg.AutoGen;
 namespace NannyCam.Viewer.Windows;
 
 /// <summary>
-/// Locates the separately-installed, shared FFmpeg runtime used by this
-/// Windows frontend. Native libraries are intentionally not committed.
+/// Locates the shared FFmpeg runtime used by this Windows frontend.
 /// </summary>
 internal static unsafe class FfmpegRuntime
 {
@@ -23,12 +22,15 @@ internal static unsafe class FfmpegRuntime
                 return;
             }
 
-            string? libraryDirectory = FindLibraryDirectory();
+            string? libraryDirectory = FfmpegRuntimeLocator.FindLibraryDirectory(
+                AppContext.BaseDirectory,
+                Environment.GetEnvironmentVariable("FFMPEG_ROOT"),
+                Environment.CurrentDirectory);
             if (libraryDirectory is null)
             {
                 throw new InvalidOperationException(
-                    "FFmpeg 9 native DLLs were not found. Set FFMPEG_ROOT to the folder containing the DLLs, " +
-                    "or place them in runtime\\ffmpeg\\bin under the working directory.");
+                    "FFmpeg 9 native DLLs were not found. The packaged app expects them in 'ffmpeg' beside the executable. " +
+                    "For development, set FFMPEG_ROOT to the DLL folder (or its parent) or use runtime\\ffmpeg\\bin.");
             }
 
             try
@@ -53,19 +55,29 @@ internal static unsafe class FfmpegRuntime
         }
     }
 
-    private static string? FindLibraryDirectory()
+}
+
+/// <summary>
+/// Resolves an FFmpeg shared-DLL directory without assuming the process
+/// working directory is the application installation directory.
+/// </summary>
+internal static class FfmpegRuntimeLocator
+{
+    internal static string? FindLibraryDirectory(string applicationBaseDirectory, string? configuredRoot, string currentDirectory)
     {
         List<string> candidates = [];
-        string? configured = Environment.GetEnvironmentVariable("FFMPEG_ROOT");
-        if (!string.IsNullOrWhiteSpace(configured))
+        if (!string.IsNullOrWhiteSpace(configuredRoot))
         {
-            candidates.Add(configured);
-            candidates.Add(Path.Combine(configured, "bin"));
+            candidates.Add(configuredRoot);
+            candidates.Add(Path.Combine(configuredRoot, "bin"));
         }
 
-        candidates.Add(Path.Combine(AppContext.BaseDirectory, "ffmpeg", "bin"));
-        candidates.Add(Path.Combine(Environment.CurrentDirectory, "runtime", "ffmpeg", "bin"));
-        candidates.Add(Path.Combine(Environment.CurrentDirectory, "runtime", "ffmpeg"));
+        candidates.Add(Path.Combine(applicationBaseDirectory, "ffmpeg"));
+        candidates.Add(Path.Combine(applicationBaseDirectory, "ffmpeg", "bin"));
+        candidates.Add(Path.Combine(applicationBaseDirectory, "runtime", "ffmpeg", "bin"));
+        candidates.Add(Path.Combine(applicationBaseDirectory, "runtime", "ffmpeg"));
+        candidates.Add(Path.Combine(currentDirectory, "runtime", "ffmpeg", "bin"));
+        candidates.Add(Path.Combine(currentDirectory, "runtime", "ffmpeg"));
 
         return candidates.FirstOrDefault(ContainsFfmpegLibraries);
     }
