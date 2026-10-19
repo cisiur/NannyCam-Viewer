@@ -56,9 +56,20 @@ Goal: improve speech audibility while preserving quiet sounds and the validated 
 - [x] deterministic unit coverage for filtering, gain, saturation, continuity, and Core architecture boundaries
 - [x] physical-camera validation of the updated live cleanup path
 
+## NC-03A — Connection resilience
+
+Goal: maintain Connect intent until Disconnect or window close, automatically recovering the camera without changing validated low-latency media behavior.
+
+- [x] one Windows session coordinator owns connection intent and sequential disposable attempts
+- [x] deterministic, cancellable retry policy: 1 s, 2 s, 3 s, then repeated 5 s
+- [x] dispose failed video/audio attempts before retrying; prevent overlapping attempts and stale callbacks
+- [x] reconnect after video connection loss while keeping video authoritative and audio failure isolated
+- [x] deterministic hardware-free lifecycle tests for retry, cancellation, disposal, stale callbacks, replacement Connect, and audio/video isolation
+- [~] physical validation: initially offline camera recovers after one Connect; established connection loss recovers; Disconnect cancels retry with no later attempt; recovered media remains live with one video/audio pipeline
+
 ## NC-04 — ONVIF PTZ
 
-Planned as the next milestone after completed NC-03.
+Planned after NC-03A physical validation.
 
 ## NC-05 — Personal-use polish
 

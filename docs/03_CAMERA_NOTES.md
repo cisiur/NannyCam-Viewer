@@ -105,6 +105,16 @@ and understandable, quiet sounds remain available, no problematic clipping or
 new artifacts were observed, audio remains effectively live, video is
 unaffected, and normal application operation is stable.
 
+## Connection resilience finding
+
+Before NC-03A, starting the application with the camera powered off and
+clicking Connect left the viewer unable to recover automatically after the
+camera was powered on. The viewer now treats Connect as persistent connection
+intent and retries RTSP video using cancellable 1 s, 2 s, 3 s, then repeated
+5 s delays. Video remains the authoritative connection signal; audio remains
+independent. Physical validation remains pending for initial-offline recovery,
+recovery after a live connection loss, and Disconnect cancellation during retry.
+
 ## Security
 
 Do not expose RTSP/ONVIF ports directly to the Internet. Prefer VPN/Tailscale for remote access.
